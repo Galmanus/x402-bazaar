@@ -70,6 +70,34 @@ the full x402 payment from inside the tool call.
 
 After the run the catalog entry shows `settleCount: 2` — provenance accumulates.
 
+## Run 3 — custom `__check_auth` contract account pays (2026-08-11)
+
+RFP 3.1 requires supporting "classic keypairs and custom __check_auth accounts". This
+run pays from a Soroban custom account contract, not a classic keypair:
+
+- Contract: `contracts/ed25519-account` (2.7KB wasm, 4 unit tests incl. a real ed25519
+  positive path via ed25519-dalek), deployed at
+  `CBSWCOS2LSGOXACLUR3LBOWKUJNMNA2SSQLS6EH3NXEG6ARXG6TZAPQ3`, funded with 0.2 USDC.
+- Client: `examples/weather/contract-account-buyer.ts` mirrors the upstream payload
+  construction and signs the auth entry with stellar-sdk `authorizeEntry` — the SDK's
+  default signature ScVal (`vec![{ public_key, signature }]`) is exactly the format the
+  contract's `__check_auth` verifies, so no custom wallet glue is needed.
+- Facilitator verify returned `{"isValid": true, "payer": "CBSWCOS2…"}` — the payer IS
+  the contract address; `__check_auth` executed in simulation and again on-chain.
+
+| field | value |
+|---|---|
+| tx hash | `61f8872b010fd4f6faef5c043bf77c51cdbc0e7ee6b7bc0203c13b5040868c72` |
+| ledger | 4087466, successful: true |
+| payer (auth entries) | `CBSWCOS2…APQ3` — a contract account, `__check_auth` custom |
+| fee account | `GBGW26HB…` (facilitator signer, 20,378 stroops — sponsorship holds) |
+| catalog after | `settleCount: 3, distinctPayers: 2` — provenance distinguishes payers |
+
+Wire note discovered doing this: the v2 PaymentPayload must carry the chosen
+requirements in an `accepted` field; upstream `_verify` reads `payload.accepted.scheme`
+and a payload without it fails with `unexpected_verify_error` (a TypeError, not a typed
+reason) — filed alongside the expiration finding as an upstream error-reporting gap.
+
 ## Upstream finding (to be reported)
 
 `@x402/stellar@2.21.0`: client and facilitator each estimate ledger close time
@@ -86,7 +114,6 @@ tolerance proportional to `maxTimeoutSeconds`, not a constant 2 ledgers.
 
 ## Not yet covered
 
-`stellar:pubnet` run, `upto` scheme (not yet implemented), custom `__check_auth`
-contract-account payer (upstream client signer is ed25519-only today), sustained-load
+`stellar:pubnet` run, `upto` scheme (not yet implemented), sustained-load
 behavior, restart/crash recovery of the catalog (store is durable but not yet
 exercised in anger).

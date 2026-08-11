@@ -259,10 +259,11 @@ SELLER_URL=http://localhost:4610 STELLAR_SECRET_KEY=S... \
   third-party security review of the off-chain service, in that order.
 - **`exact` scheme only.** The `upto` scheme and its `scheme_upto_stellar.md`
   network spec are roadmap — to be contributed upstream, not forked here.
-- **Ed25519 payers only, today.** The upstream client signer does not yet
-  cover contract accounts with custom `__check_auth`; facilitator-side
-  validation goes through upstream simulation, but the path is unexercised
-  end to end in this repo.
+- **Contract-account payers are proven, with a hand-rolled client.** A custom
+  `__check_auth` account paid end to end (tx `61f8872b…`, CONFORMANCE run 3),
+  but the upstream client signer is ed25519-only — our example signs the auth
+  entry manually via `authorizeEntry`. Packaging that as a reusable signer is
+  scheduled work.
 - **The eval is small.** 16 queries and 24 services measure the mechanism, not
   the ceiling; scaling it (and publishing the larger set) is scheduled work.
   The 0.833 is honest for this set and should be read as "the hybrid closes
