@@ -31,7 +31,11 @@ app.use(
       "GET /weather": {
         accepts: {
           scheme: "exact",
-          price: "$0.05",
+          // Default USDC; set PRICE_ASSET (a SEP-41 SAC C... address) and
+          // PRICE_AMOUNT (base units, 7 decimals) to charge any other token.
+          price: process.env.PRICE_ASSET
+            ? { amount: process.env.PRICE_AMOUNT ?? "1000000", asset: process.env.PRICE_ASSET }
+            : "$0.05",
           network: NETWORK as never,
           payTo,
           // Interim: client and facilitator estimate ledger close time independently

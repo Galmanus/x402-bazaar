@@ -98,6 +98,28 @@ requirements in an `accepted` field; upstream `_verify` reads `payload.accepted.
 and a payload without it fails with `unexpected_verify_error` (a TypeError, not a typed
 reason) — filed alongside the expiration finding as an upstream error-reporting gap.
 
+## Run 4 — non-USDC SEP-41 token (2026-08-11)
+
+RFP 3.1: "Support any SEP-41 token, USDC by default." This run settles in a freshly
+issued classic asset (`BAZ`, issuer `GDYQIGYW…NZYP`) wrapped as a SAC — with the
+completely stock upstream buyer (`@x402/fetch`), no code changes anywhere: the seller
+priced the route as `{ amount: "1000000", asset: "CAG5JKXM…73VE" }` and everything else
+followed from the requirements.
+
+| field | value |
+|---|---|
+| asset | BAZ SAC `CAG5JKXMFKSNC3DC26CJ6XHC472QQQHIQPNC3XPUTMQXJRWZLVJY73VE` (7 decimals) |
+| tx hash | `2192305314732803be6f62709721082c9cf3f2f86a8edeffb10358882934a8ea` |
+| ledger | 4090532, successful: true |
+| amount | 1000000 base units = 0.1 BAZ (recipient classic balance confirms 0.1000000) |
+| fee account | `GBGW26HB…` (facilitator signer, 22,953 stroops — sponsorship holds) |
+| catalog | second entry auto-cataloged; per-entry provenance independent |
+
+Setup (scripted, reproducible): issue classic asset → `stellar contract asset deploy`
+→ trustlines for payer and recipient → mint. The trustline requirement (RFP 3.5) is
+real and hit here: without `changeTrust` on the recipient the settle fails with
+`op_no_trust`.
+
 ## Upstream finding (to be reported)
 
 `@x402/stellar@2.21.0`: client and facilitator each estimate ledger close time

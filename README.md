@@ -12,7 +12,7 @@
 **The marketplace layer for the agent economy on Stellar. Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.**
 
 [![tests](https://img.shields.io/badge/tests-21%20green%20%2B%20typecheck-4c1)](#reproduce)
-[![testnet](https://img.shields.io/badge/settlements-3%20real%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
+[![testnet](https://img.shields.io/badge/settlements-4%20real%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
 [![search](https://img.shields.io/badge/search-nDCG%4010%200.833%2C%20measured-1f6feb)](#the-numbers)
 [![built on](https://img.shields.io/badge/%40x402%2Fstellar-verify%2Fsettle%20NOT%20reimplemented-8A2BE2)](#in-one-breath)
 [![license](https://img.shields.io/badge/license-Apache--2.0%2C%20zero%20copyleft-blue)](#license)
@@ -174,7 +174,7 @@ shapes are the ones `@x402/core`'s `HTTPFacilitatorClient` actually sends (so
 any existing seller middleware works unchanged, and `POST /supported` is also
 accepted for OZ-client compatibility); discovery validation is the upstream
 spec functions; cataloging outcomes ride the `EXTENSION-RESPONSES` header the
-client already logs. Any SEP-41 token, USDC by default, 7 decimals. CAIP-2
+client already logs. Any SEP-41 token, USDC by default, 7 decimals — proven with a non-USDC asset in CONFORMANCE run 4. CAIP-2
 networks `stellar:testnet` and `stellar:pubnet`, both registrable at once.
 
 ## The numbers
