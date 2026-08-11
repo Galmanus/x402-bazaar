@@ -20,7 +20,8 @@
   },
   "workspaces": [
     "packages/bazaar",
-    "packages/facilitator"
+    "packages/facilitator",
+    "examples/weather"
   ],
   "devDependencies": {
     "@types/express": "^5.0.6",

@@ -75,10 +75,16 @@ before traversal/scheme checks); invalid templates fall back to the concrete URL
 
 Done and tested (21 tests): facilitator HTTP surface against a stub scheme; catalog
 ingest/upsert/provenance; routeTemplate poisoning defense; discovery filters and
-pagination; BM25 ranking and cursor semantics. Real `ExactStellarScheme` wiring exists in
-`server.ts` but has **not yet been exercised against testnet** in this repo.
+pagination; BM25 ranking and cursor semantics.
 
-Not built yet (roadmap): live testnet/pubnet conformance runs with settled tx hashes, MCP
+**Proven live on testnet** (2026-08-11): a real $0.05 USDC purchase through this
+facilitator with the standard upstream seller/buyer stack — verify, settle (tx
+[`dae9569b…a696`](https://stellar.expert/explorer/testnet/tx/dae9569bc631550c5ae24eec06e6fb58557146a00b7f7b1b92d2e28a591aa696),
+ledger 4079722), fees sponsored by the facilitator signer (payer spent USDC only),
+automatic cataloging, and the service found via `/discovery/search`. Full evidence and
+an upstream interop finding in [docs/CONFORMANCE.md](docs/CONFORMANCE.md).
+
+Not built yet (roadmap): pubnet conformance run, MCP
 discovery server, `upto` scheme + `scheme_upto_stellar.md` upstream contribution,
 seller/buyer SDK helpers, search eval set + published nDCG results, hybrid dense
 retrieval, third-party security review, production runbook/monitoring.
