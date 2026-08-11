@@ -12,7 +12,7 @@
 **The marketplace layer for the agent economy on Stellar. Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.**
 
 [![tests](https://img.shields.io/badge/tests-21%20green%20%2B%20typecheck-4c1)](#reproduce)
-[![testnet](https://img.shields.io/badge/settlements-2%20real%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
+[![testnet](https://img.shields.io/badge/settlements-3%20real%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
 [![search](https://img.shields.io/badge/search-nDCG%4010%200.833%2C%20measured-1f6feb)](#the-numbers)
 [![built on](https://img.shields.io/badge/%40x402%2Fstellar-verify%2Fsettle%20NOT%20reimplemented-8A2BE2)](#in-one-breath)
 [![license](https://img.shields.io/badge/license-Apache--2.0%2C%20zero%20copyleft-blue)](#license)
