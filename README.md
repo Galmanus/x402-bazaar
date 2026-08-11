@@ -84,8 +84,11 @@ ledger 4079722), fees sponsored by the facilitator signer (payer spent USDC only
 automatic cataloging, and the service found via `/discovery/search`. Full evidence and
 an upstream interop finding in [docs/CONFORMANCE.md](docs/CONFORMANCE.md).
 
-Not built yet (roadmap): pubnet conformance run, MCP
-discovery server, `upto` scheme + `scheme_upto_stellar.md` upstream contribution,
+An **MCP discovery server** (`packages/mcp-discovery`) exposes `search_services`,
+`list_services`, `get_service`, and `paid_call` to MCP-compatible agents — the paid_call
+run settled on-chain too (see CONFORMANCE.md, run 2).
+
+Not built yet (roadmap): pubnet conformance run, `upto` scheme + `scheme_upto_stellar.md` upstream contribution,
 seller/buyer SDK helpers, search eval set + published nDCG results, hybrid dense
 retrieval, third-party security review, production runbook/monitoring.
 

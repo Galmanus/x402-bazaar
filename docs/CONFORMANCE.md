@@ -54,6 +54,22 @@ BazaarWeather http://localhost:4610/weather
 
 Reproduce: `examples/weather/` (seller.ts, buyer.ts) — see README env vars.
 
+## Run 2 — MCP agent flow: discover → paid_call (2026-08-11)
+
+The MCP discovery server (`packages/mcp-discovery`) was exercised over real stdio with an
+MCP client: `search_services("weather in my city")` returned the cataloged service with
+price and provenance; `paid_call("http://localhost:4610/weather?city=Blumenau")` executed
+the full x402 payment from inside the tool call.
+
+| field | value |
+|---|---|
+| tx hash | `904be536ade79b89002d662ce9c295276a4209b45c6d5f1c9d0ce24459104412` |
+| initiated by | MCP tool call (`paid_call`) |
+| payer | `GC26DQPIO2FTWOK3SHVOR6PU7Q3OZTBHG4VS7UMGPJBLYPLJX2YVRPWM` (USDC only, no XLM spent) |
+| result | 200 + resource body + settlement receipt returned to the agent |
+
+After the run the catalog entry shows `settleCount: 2` — provenance accumulates.
+
 ## Upstream finding (to be reported)
 
 `@x402/stellar@2.21.0`: client and facilitator each estimate ledger close time

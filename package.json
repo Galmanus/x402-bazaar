@@ -21,7 +21,8 @@
   "workspaces": [
     "packages/bazaar",
     "packages/facilitator",
-    "examples/weather"
+    "examples/weather",
+    "packages/mcp-discovery"
   ],
   "devDependencies": {
     "@types/express": "^5.0.6",
