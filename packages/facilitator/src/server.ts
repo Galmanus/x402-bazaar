@@ -7,13 +7,15 @@
  *   FEE_BUMP_SECRET    optional — separate fee-bump signer (decouples fees from sequence numbers)
  *   NETWORKS           default "stellar:testnet" — comma-separated CAIP-2 ids
  *   RPC_URL            optional — custom Soroban RPC (applies to all networks listed)
+ *   EMBEDDINGS         optional — "local" enables hybrid BM25+dense search
+ *                      (all-MiniLM-L6-v2 in-process; first start downloads ~23MB)
  *   DB_PATH            default "./bazaar.db"
  *   PORT               default 8402
  */
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
 import { createEd25519Signer } from "@x402/stellar";
 import type { Network } from "@x402/core/types";
-import { CatalogStore, SearchEngine } from "@x402-bazaar/catalog";
+import { CatalogStore, LocalEmbeddingProvider, SearchEngine } from "@x402-bazaar/catalog";
 import { buildApp, type FacilitatorScheme } from "./app.ts";
 
 const secrets = (process.env.SIGNER_SECRET ?? "").split(",").filter(Boolean);
@@ -24,7 +26,10 @@ if (!secrets.length) {
 const networks = (process.env.NETWORKS ?? "stellar:testnet").split(",").filter(Boolean);
 
 const store = new CatalogStore(process.env.DB_PATH ?? "./bazaar.db");
-const engine = new SearchEngine(store);
+const engine = new SearchEngine(
+  store,
+  process.env.EMBEDDINGS === "local" ? new LocalEmbeddingProvider() : undefined,
+);
 
 const schemes = new Map<string, FacilitatorScheme>();
 for (const network of networks) {

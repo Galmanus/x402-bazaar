@@ -9,6 +9,7 @@
  */
 import { createHash } from "node:crypto";
 import { Bm25Index, type IndexableDoc } from "./bm25.ts";
+import { cosine, rrfFuse, type EmbeddingProvider } from "./embeddings.ts";
 import { clampLimit, type CatalogEntry, type CatalogStore, type ListFilters } from "./store.ts";
 
 export interface SearchParams extends Omit<ListFilters, "limit" | "offset"> {
@@ -33,8 +34,18 @@ interface CursorState {
 export class SearchEngine {
   private index = new Bm25Index();
   private snapshot = "";
+  private docVectors = new Map<string, number[]>();
+  private embedJob: Promise<void> = Promise.resolve();
 
-  constructor(private store: CatalogStore) {
+  /**
+   * Without a provider: BM25 only (zero-dependency default). With one: hybrid —
+   * BM25 and cosine rankings fused with reciprocal rank fusion. Our eval shows
+   * BM25 alone scores 0 on vocabulary-mismatch queries (see eval/search-eval.ts).
+   */
+  constructor(
+    private store: CatalogStore,
+    private embeddings?: EmbeddingProvider,
+  ) {
     this.rebuild();
   }
 
@@ -45,9 +56,24 @@ export class SearchEngine {
     this.snapshot = hash(
       entries.length + "|" + (entries.map((e) => e.lastUpdated).sort().at(-1) ?? ""),
     );
+    if (this.embeddings) {
+      // Embedding is async; searches served before it lands fall back to BM25.
+      const provider = this.embeddings;
+      this.embedJob = this.embedJob
+        .then(async () => {
+          const vectors = await provider.embed(entries.map(embeddingText));
+          this.docVectors = new Map(entries.map((e, i) => [e.key, vectors[i]]));
+        })
+        .catch((err) => console.error("embedding index failed, staying on BM25:", err));
+    }
   }
 
-  search(params: SearchParams): SearchPage {
+  /** Wait for the async embedding index (tests and warm-up). */
+  ready(): Promise<void> {
+    return this.embedJob;
+  }
+
+  async search(params: SearchParams): Promise<SearchPage> {
     const limit = clampLimit(params.limit, 20, 100);
     const qhash = hash(
       JSON.stringify([params.query, params.type, params.payTo, params.scheme, params.network, params.extensions]),
@@ -66,11 +92,24 @@ export class SearchEngine {
       }
     }
 
-    const hits = this.index.search(params.query);
+    const bm25Ranking = this.index.search(params.query).map((h) => h.key);
+    let ranking = bm25Ranking;
+    if (this.embeddings && this.docVectors.size) {
+      try {
+        const [queryVector] = await this.embeddings.embed([params.query]);
+        const semantic = [...this.docVectors.entries()]
+          .map(([key, vec]) => ({ key, score: cosine(queryVector, vec) }))
+          .sort((a, b) => b.score - a.score || a.key.localeCompare(b.key))
+          .map((s) => s.key);
+        ranking = rrfFuse([bm25Ranking, semantic]);
+      } catch (err) {
+        console.error("query embedding failed, using BM25 ranking:", err);
+      }
+    }
     const byKey = new Map(this.store.all().map((e) => [e.key, e]));
     const filtered: CatalogEntry[] = [];
-    for (const hit of hits) {
-      const entry = byKey.get(hit.key);
+    for (const key of ranking) {
+      const entry = byKey.get(key);
       if (!entry) continue;
       if (params.type && entry.type !== params.type) continue;
       if (params.payTo && entry.payTo !== params.payTo) continue;
@@ -88,6 +127,12 @@ export class SearchEngine {
         : undefined;
     return { items: page, nextCursor, partialResults, total: filtered.length };
   }
+}
+
+function embeddingText(entry: CatalogEntry): string {
+  return [entry.serviceName, (entry.tags ?? []).join(" "), entry.description]
+    .filter(Boolean)
+    .join(". ");
 }
 
 function toDoc(entry: CatalogEntry): IndexableDoc {

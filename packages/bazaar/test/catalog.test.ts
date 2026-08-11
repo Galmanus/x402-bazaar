@@ -146,27 +146,27 @@ describe("CatalogStore.list filters", () => {
 });
 
 describe("SearchEngine", () => {
-  test("finds by natural language, paginates with cursor, flags catalog drift", () => {
+  test("finds by natural language, paginates with cursor, flags catalog drift", async () => {
     const store = new CatalogStore();
     ingestSettledPayment(store, payloadWith(), requirements, { txHash: "tx1", payer: "GPAYER1" });
     const engine = new SearchEngine(store);
 
-    const page = engine.search({ query: "what is the weather like" });
+    const page = await engine.search({ query: "what is the weather like" });
     expect(page.items).toHaveLength(1);
     expect(page.items[0].serviceName).toBe("WeatherCo");
     expect(page.partialResults).toBe(false);
     expect(page.nextCursor).toBeUndefined();
 
     // cursor from a different query restarts and flags partial
-    const drifted = engine.search({ query: "weather", cursor: "not-a-cursor" });
+    const drifted = await engine.search({ query: "weather", cursor: "not-a-cursor" });
     expect(drifted.partialResults).toBe(true);
   });
 
-  test("filters compose with ranking", () => {
+  test("filters compose with ranking", async () => {
     const store = new CatalogStore();
     ingestSettledPayment(store, payloadWith(), requirements, { txHash: "tx1" });
     const engine = new SearchEngine(store);
-    expect(engine.search({ query: "weather", network: "stellar:pubnet" }).items).toHaveLength(0);
-    expect(engine.search({ query: "weather", network: "stellar:testnet" }).items).toHaveLength(1);
+    expect((await engine.search({ query: "weather", network: "stellar:pubnet" })).items).toHaveLength(0);
+    expect((await engine.search({ query: "weather", network: "stellar:testnet" })).items).toHaveLength(1);
   });
 });

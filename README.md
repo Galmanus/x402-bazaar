@@ -23,8 +23,20 @@ test suite proves — see [Honest state](#honest-state).
   itself settled and exposes per-entry provenance (settle count, **distinct payers**,
   first/last tx hash) so rankers and buyers can discount self-dealing volume.
 - Generic semantic search underperforms on tool retrieval
-  ([ToolRet, arXiv:2503.01763](https://arxiv.org/abs/2503.01763)). The shipped default is
-  a deterministic field-boosted BM25; search quality is an eval artifact, not an adjective.
+  ([ToolRet, arXiv:2503.01763](https://arxiv.org/abs/2503.01763)), so search quality here
+  is an eval artifact, not an adjective. Measured on this repo's harness
+  (`eval/search-eval.ts`, 24 services, 16 agent queries, graded relevance):
+
+  | ranking | nDCG@10 | hit@1 |
+  |---|---|---|
+  | substring baseline | 0.524 | 6/16 |
+  | BM25 (zero-dep default) | 0.497 | 9/16 |
+  | **hybrid BM25 + local MiniLM, RRF** (`EMBEDDINGS=local`) | **0.833** | **12/16** |
+
+  BM25 alone scores 0 whenever agent vocabulary diverges from catalog vocabulary
+  ("will it rain" vs "weather forecast") — the ToolRet failure mode reproduced. The
+  hybrid closes it with an in-process 23MB model (`all-MiniLM-L6-v2`), no external API,
+  still fully self-hostable. Reproduce: `EMBEDDINGS=local npx tsx eval/search-eval.ts`.
 
 ## Architecture
 
@@ -89,8 +101,7 @@ An **MCP discovery server** (`packages/mcp-discovery`) exposes `search_services`
 run settled on-chain too (see CONFORMANCE.md, run 2).
 
 Not built yet (roadmap): pubnet conformance run, `upto` scheme + `scheme_upto_stellar.md` upstream contribution,
-seller/buyer SDK helpers, search eval set + published nDCG results, hybrid dense
-retrieval, third-party security review, production runbook/monitoring.
+seller/buyer SDK helpers, larger eval set, third-party security review, production runbook/monitoring.
 
 ## License
 

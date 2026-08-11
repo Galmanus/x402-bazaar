@@ -124,14 +124,14 @@ export function buildApp({ schemes, store, engine, x402Version = 2 }: AppDeps): 
     });
   });
 
-  app.get("/discovery/search", (req, res) => {
+  app.get("/discovery/search", async (req, res) => {
     const q = req.query;
     const query = str(q.query);
     if (!query) {
       res.status(400).json({ error: "query parameter is required" });
       return;
     }
-    const page = engine.search({
+    const page = await engine.search({
       query,
       type: str(q.type),
       payTo: str(q.payTo),

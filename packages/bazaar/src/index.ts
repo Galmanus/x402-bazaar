@@ -18,3 +18,9 @@ export {
   type SearchParams,
   type SearchPage,
 } from "./search.ts";
+export {
+  LocalEmbeddingProvider,
+  rrfFuse,
+  cosine,
+  type EmbeddingProvider,
+} from "./embeddings.ts";
