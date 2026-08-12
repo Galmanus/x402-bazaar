@@ -15,7 +15,9 @@ import {
   CatalogStore,
   SearchEngine,
   ingestSettledPayment,
+  readCredentialExtension,
   type CatalogEntry,
+  type CredentialVerifier,
   type IngestOutcome,
 } from "@x402-bazaar/catalog";
 
@@ -37,10 +39,17 @@ export interface AppDeps {
   schemes: Map<string, FacilitatorScheme>;
   store: CatalogStore;
   engine: SearchEngine;
+  /**
+   * Optional anonymous-credential verifier. When set, a settled payment
+   * carrying a valid credential proof contributes its nullifier to
+   * Sybil-resistant provenance (distinctCredentialHolders). Absent = today's
+   * behavior, unchanged.
+   */
+  credentialVerifier?: CredentialVerifier;
   x402Version?: number;
 }
 
-export function buildApp({ schemes, store, engine, x402Version = 2 }: AppDeps): Express {
+export function buildApp({ schemes, store, engine, credentialVerifier, x402Version = 2 }: AppDeps): Express {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
 
@@ -85,9 +94,23 @@ export function buildApp({ schemes, store, engine, x402Version = 2 }: AppDeps): 
         // Cataloging is best-effort and must never fail a settlement.
         let outcome: IngestOutcome;
         try {
+          // Optional credential gate: verify (never trust a client-supplied
+          // nullifier), and only if it validates does it count toward
+          // Sybil-resistant provenance. Verification failure never fails the
+          // settlement — the payment already happened.
+          let credentialNullifier: string | undefined;
+          if (credentialVerifier && readCredentialExtension(parsed.payload)) {
+            try {
+              const cred = await credentialVerifier.verify(parsed.payload, parsed.requirements);
+              credentialNullifier = cred?.nullifier;
+            } catch {
+              credentialNullifier = undefined;
+            }
+          }
           outcome = ingestSettledPayment(store, parsed.payload, parsed.requirements, {
             txHash: result.transaction,
             payer: result.payer ?? payerFromPayload(parsed.payload),
+            credentialNullifier,
           });
           if (outcome.status === "cataloged") engine.rebuild();
         } catch (err) {
@@ -215,6 +238,9 @@ export function toDiscoveryResource(entry: CatalogEntry): Record<string, unknown
       "x402-bazaar/provenance": {
         settleCount: entry.settleCount,
         distinctPayers: entry.distinctPayers,
+        // Sybil-resistant when payers attach an anonymous credential proof
+        // (bounded by the association set, not by keypair count). 0 otherwise.
+        distinctCredentialHolders: entry.distinctCredentialHolders,
         firstSettleTx: entry.firstSettleTx,
         lastSettleTx: entry.lastSettleTx,
       },

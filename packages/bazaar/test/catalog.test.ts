@@ -4,6 +4,7 @@ import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import { CatalogStore } from "../src/store.ts";
 import { ingestSettledPayment } from "../src/ingest.ts";
 import { SearchEngine } from "../src/search.ts";
+import { TrustedNullifierVerifier, readCredentialExtension } from "../src/credential.ts";
 
 const requirements = {
   scheme: "exact",
@@ -110,6 +111,51 @@ describe("ingestSettledPayment", () => {
     expect(store.all()).toHaveLength(1);
     expect(store.all()[0].routeTemplate).toBe("/users/:userId");
     expect(store.all()[0].settleCount).toBe(2);
+  });
+});
+
+describe("Sybil-resistant credential provenance", () => {
+  test("distinctCredentialHolders counts nullifiers, not addresses", () => {
+    const store = new CatalogStore();
+    // Two different addresses (Sybil), SAME credential holder → 1 holder, 2 payers.
+    ingestSettledPayment(store, payloadWith(), requirements, {
+      txHash: "tx1",
+      payer: "GADDR1",
+      credentialNullifier: "nullifierA",
+    });
+    ingestSettledPayment(store, payloadWith(), requirements, {
+      txHash: "tx2",
+      payer: "GADDR2",
+      credentialNullifier: "nullifierA",
+    });
+    const [e1] = store.all();
+    expect(e1.distinctPayers).toBe(2);
+    expect(e1.distinctCredentialHolders).toBe(1); // the Sybil is collapsed
+
+    // A genuinely distinct holder bumps it to 2.
+    ingestSettledPayment(store, payloadWith(), requirements, {
+      txHash: "tx3",
+      payer: "GADDR3",
+      credentialNullifier: "nullifierB",
+    });
+    expect(store.all()[0].distinctCredentialHolders).toBe(2);
+  });
+
+  test("no credential → distinctCredentialHolders stays 0, behavior unchanged", () => {
+    const store = new CatalogStore();
+    ingestSettledPayment(store, payloadWith(), requirements, { txHash: "tx1", payer: "GADDR1" });
+    expect(store.all()[0].distinctCredentialHolders).toBe(0);
+  });
+
+  test("TrustedNullifierVerifier reads a nullifier from the credential extension", () => {
+    const verifier = new TrustedNullifierVerifier();
+    const payload = payloadWith({
+      extensions: { "pq402/credential": { nullifier: "n1", proof: "…" } },
+    });
+    expect(readCredentialExtension(payload)).toEqual({ nullifier: "n1", proof: "…" });
+    expect(verifier.verify(payload)).toEqual({ nullifier: "n1" });
+    // Absent credential → declines.
+    expect(verifier.verify(payloadWith())).toBeNull();
   });
 });
 

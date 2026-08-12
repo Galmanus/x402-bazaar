@@ -37,6 +37,13 @@ export interface CatalogEntry {
   lastSettleTx?: string;
   settleCount: number;
   distinctPayers: number;
+  /**
+   * Distinct anonymous credential holders (nullifiers) that paid for this
+   * resource, when payers attach a credential proof. Sybil-resistant where
+   * distinctPayers is not: addresses are free, credentials are bounded by the
+   * association set. Zero when no credential-gated payments were seen.
+   */
+  distinctCredentialHolders: number;
 }
 
 export interface ListFilters {
@@ -51,9 +58,19 @@ export interface ListFilters {
 }
 
 export interface UpsertInput {
-  entry: Omit<CatalogEntry, "lastUpdated" | "settleCount" | "distinctPayers" | "firstSettleTx" | "lastSettleTx">;
+  entry: Omit<
+    CatalogEntry,
+    | "lastUpdated"
+    | "settleCount"
+    | "distinctPayers"
+    | "distinctCredentialHolders"
+    | "firstSettleTx"
+    | "lastSettleTx"
+  >;
   txHash?: string;
   payer?: string;
+  /** Anonymous credential nullifier, if the payment carried a verified credential. */
+  credentialNullifier?: string;
   now?: string;
 }
 
@@ -90,12 +107,17 @@ export class CatalogStore {
         payer TEXT NOT NULL,
         PRIMARY KEY (key, payer)
       );
+      CREATE TABLE IF NOT EXISTS credentials (
+        key TEXT NOT NULL,
+        nullifier TEXT NOT NULL,
+        PRIMARY KEY (key, nullifier)
+      );
       CREATE INDEX IF NOT EXISTS idx_resources_network ON resources(network);
       CREATE INDEX IF NOT EXISTS idx_resources_pay_to ON resources(pay_to);
     `);
   }
 
-  upsert({ entry, txHash, payer, now }: UpsertInput): CatalogEntry {
+  upsert({ entry, txHash, payer, credentialNullifier, now }: UpsertInput): CatalogEntry {
     const ts = now ?? new Date().toISOString();
     const existing = this.get(entry.key);
     if (existing) {
@@ -155,6 +177,11 @@ export class CatalogStore {
     if (payer) {
       this.db.prepare(`INSERT OR IGNORE INTO payers (key, payer) VALUES (?,?)`).run(entry.key, payer);
     }
+    if (credentialNullifier) {
+      this.db
+        .prepare(`INSERT OR IGNORE INTO credentials (key, nullifier) VALUES (?,?)`)
+        .run(entry.key, credentialNullifier);
+    }
     const result = this.get(entry.key);
     if (!result) throw new Error(`upsert failed for ${entry.key}`);
     return result;
@@ -205,6 +232,9 @@ export class CatalogStore {
     const payerRow = this.db
       .prepare(`SELECT COUNT(*) AS c FROM payers WHERE key=?`)
       .get(key) as { c: number };
+    const credRow = this.db
+      .prepare(`SELECT COUNT(*) AS c FROM credentials WHERE key=?`)
+      .get(key) as { c: number };
     return {
       key,
       resource: row.resource as string,
@@ -227,6 +257,7 @@ export class CatalogStore {
       lastSettleTx: (row.last_settle_tx as string | null) ?? undefined,
       settleCount: row.settle_count as number,
       distinctPayers: payerRow.c,
+      distinctCredentialHolders: credRow.c,
     };
   }
 }

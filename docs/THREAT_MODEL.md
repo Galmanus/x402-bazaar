@@ -14,7 +14,7 @@ map we hand the auditor, not a substitute for them.
 |---|----------|-------|--------|
 | T1 | high | catalog trust boundary — poisoned routeTemplate | **mitigated + tested** |
 | T2 | high | settlement replay | **delegated upstream + verified live** |
-| T3 | medium | provenance Sybil inflation | **documented limit; upgrade designed** |
+| T3 | medium | provenance Sybil inflation | **integration point shipped; STARK verifier pending** |
 | T4 | medium | catalog spam / storage griefing | open (rate limits scheduled T1) |
 | T5 | medium | seller spoofing in listings | **mitigated by construction** |
 | T6 | medium | front-running of settlements | analyzed, low impact on Stellar |
@@ -72,15 +72,20 @@ own entry with N funded payer accounts for N × ($0.05 + no fee, since we sponso
 The field raises the cost of fake volume from zero to linear; it does not make it
 impossible. README says this plainly (Honest limits).
 
-Designed upgrade (not yet scheduled): count distinct CREDENTIAL HOLDERS instead of
-addresses — a payer optionally attaches an unlinkable membership proof (the
-riverrun/vineland two-step crowd gate, whose verifier is deployed on Stellar mainnet),
-and the catalog counts distinct nullifiers per round under a curated association-set
-root. The vineland audit already mapped the sharp edges this inherits: F13 (round must
-be domain-separated per app or nullifiers link across apps), F11 (the round must be
-pinned or one member mints unlimited nullifiers), F8 (canonical limbs before hashing).
-Fee sponsorship makes the Sybil economics WORSE for us than for other facilitators
-(the attacker doesn't even pay gas) — worth stating to the auditor.
+Integration SHIPPED (packages/bazaar/src/credential.ts): the catalog now counts
+distinct CREDENTIAL HOLDERS (nullifiers) alongside distinct addresses, exposed as
+`distinctCredentialHolders` in provenance. A payer attaches a credential proof
+(extension `pq402/credential`); the facilitator verifies it via a configured
+`CredentialVerifier` and counts the nullifier — never a client-supplied one (that would
+be Sybil-inflatable again). Tests prove two addresses sharing one credential collapse to
+one holder. What is NOT yet wired: the production verifier, the post-quantum Circle-STARK
+credential from pq402 (github.com/Galmanus/pq402), whose crowd-gate verifier is deployed
+on Stellar mainnet. The vineland audit maps the sharp edges it must own: F13 (round
+domain-separated per facilitator or nullifiers link across services), F11 (round pinned
+or one member mints unlimited nullifiers), F8 (canonical limbs before hashing). Fee
+sponsorship makes the Sybil economics WORSE for us than for other facilitators (the
+attacker doesn't even pay gas) — which is exactly why credential-holder counting matters
+here more than elsewhere.
 
 ## T4 — catalog spam / storage griefing  ·  OPEN (scheduled T1)
 

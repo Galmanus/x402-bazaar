@@ -40,7 +40,7 @@ export function ingestSettledPayment(
   store: CatalogStore,
   paymentPayload: PaymentPayload,
   requirements: PaymentRequirements,
-  opts: { txHash?: string; payer?: string } = {},
+  opts: { txHash?: string; payer?: string; credentialNullifier?: string } = {},
 ): IngestOutcome {
   let discovered: DiscoveredResource | null;
   try {
@@ -71,7 +71,12 @@ export function ingestSettledPayment(
 
   const entry: Omit<
     CatalogEntry,
-    "lastUpdated" | "settleCount" | "distinctPayers" | "firstSettleTx" | "lastSettleTx"
+    | "lastUpdated"
+    | "settleCount"
+    | "distinctPayers"
+    | "distinctCredentialHolders"
+    | "firstSettleTx"
+    | "lastSettleTx"
   > = {
     key: catalogKey(requirements.network, requirements.payTo, template),
     resource: normalized,
@@ -92,7 +97,12 @@ export function ingestSettledPayment(
   };
 
   try {
-    const saved = store.upsert({ entry, txHash: opts.txHash, payer: opts.payer });
+    const saved = store.upsert({
+      entry,
+      txHash: opts.txHash,
+      payer: opts.payer,
+      credentialNullifier: opts.credentialNullifier,
+    });
     return { status: "cataloged", key: saved.key };
   } catch (err) {
     return { status: "rejected", reason: `store error: ${(err as Error).message}` };

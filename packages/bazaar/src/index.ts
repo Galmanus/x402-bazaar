@@ -24,3 +24,10 @@ export {
   cosine,
   type EmbeddingProvider,
 } from "./embeddings.ts";
+export {
+  CREDENTIAL_EXTENSION,
+  readCredentialExtension,
+  TrustedNullifierVerifier,
+  type CredentialVerifier,
+  type CredentialResult,
+} from "./credential.ts";

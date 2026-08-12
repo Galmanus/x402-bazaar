@@ -291,10 +291,13 @@ SELLER_URL=http://localhost:4610 STELLAR_SECRET_KEY=S... \
   the ceiling; scaling it (and publishing the larger set) is scheduled work.
   The 0.833 is honest for this set and should be read as "the hybrid closes
   the vocabulary gap", not as a leaderboard number.
-- **The catalog trusts its own settlements, which is necessary but not
-  sufficient.** Distinct-payer provenance raises the cost of fake volume; it
-  does not make Sybil payers impossible. The measured Base numbers say
-  attackers will try — that is why the field is exposed to rankers instead of
+- **Sybil-resistant provenance is wired but not yet backed by the STARK
+  verifier.** The catalog counts distinct credential holders (nullifiers), not
+  just addresses (`distinctCredentialHolders`), so two Sybil addresses sharing
+  one credential collapse to one — tested. The production verifier is pq402's
+  post-quantum anonymous credential (its crowd-gate verifier is live on Stellar
+  mainnet); wiring it in is scheduled. Until then the field reads 0 and
+  distinct-address provenance is the honest signal — exposed to rankers, never
   hidden behind a "verified" badge.
 - **`node:sqlite` is experimental** in Node 22 and isolated behind the
   `CatalogStore` interface; swapping engines is a one-file change.
