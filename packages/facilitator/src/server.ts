@@ -11,12 +11,18 @@
  *                      (all-MiniLM-L6-v2 in-process; first start downloads ~23MB)
  *   DB_PATH            default "./bazaar.db"
  *   PORT               default 8402
+ *   UPTO_CONTRACT      optional — deployed upto-authorization contract id;
+ *                      enables the upto scheme (advertised on /supported,
+ *                      capture via POST /upto/settle). Uses the first NETWORKS
+ *                      entry unless UPTO_NETWORK is set.
+ *   UPTO_NETWORK       optional — CAIP-2 network for UPTO_CONTRACT
  */
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
 import { createEd25519Signer } from "@x402/stellar";
 import type { Network } from "@x402/core/types";
 import { CatalogStore, LocalEmbeddingProvider, SearchEngine } from "@x402-bazaar/catalog";
-import { buildApp, type FacilitatorScheme } from "./app.ts";
+import { buildApp, type FacilitatorScheme, type UptoConfig } from "./app.ts";
+import { CliUptoSettler } from "./upto-settler.ts";
 
 const secrets = (process.env.SIGNER_SECRET ?? "").split(",").filter(Boolean);
 if (!secrets.length) {
@@ -46,7 +52,23 @@ for (const network of networks) {
   );
 }
 
+let upto: UptoConfig | undefined;
+if (process.env.UPTO_CONTRACT) {
+  const uptoNetwork = process.env.UPTO_NETWORK ?? networks[0];
+  const cliNetwork = uptoNetwork === "stellar:pubnet" ? "mainnet" : "testnet";
+  upto = {
+    contracts: { [uptoNetwork]: process.env.UPTO_CONTRACT },
+    settler: new CliUptoSettler({
+      signerSecret: secrets[0],
+      cliNetwork: { [uptoNetwork]: cliNetwork },
+    }),
+  };
+}
+
 const port = Number(process.env.PORT ?? 8402);
-buildApp({ schemes, store, engine }).listen(port, () => {
-  console.log(`x402-bazaar facilitator on :${port} — networks: ${networks.join(", ")}`);
+buildApp({ schemes, store, engine, upto }).listen(port, () => {
+  console.log(
+    `x402-bazaar facilitator on :${port} — networks: ${networks.join(", ")}` +
+      (upto ? ` — upto: ${Object.values(upto.contracts)[0]}` : ""),
+  );
 });

@@ -63,12 +63,21 @@ const paymentPayload = {
 let server: Server;
 let base: string;
 
+const uptoCaptures: Array<{ authId: string; actual: string }> = [];
+const stubUptoSettler = {
+  async settle(input: { authId: string; actual: string }) {
+    uptoCaptures.push({ authId: input.authId, actual: input.actual });
+    return { success: true, transaction: `upto-tx-${input.authId}` };
+  },
+};
+
 beforeAll(async () => {
   const store = new CatalogStore();
   const app = buildApp({
     schemes: new Map([["stellar:testnet", stubScheme]]),
     store,
     engine: new SearchEngine(store),
+    upto: { contracts: { "stellar:testnet": "CUPTO123" }, settler: stubUptoSettler },
   });
   await new Promise<void>((resolve) => {
     server = app.listen(0, () => resolve());
@@ -84,9 +93,12 @@ describe("facilitator endpoints", () => {
     const res = await fetch(`${base}/supported`);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.kinds).toEqual([
-      { x402Version: 2, scheme: "exact", network: "stellar:testnet", extra: { areFeesSponsored: true } },
-    ]);
+    expect(body.kinds).toContainEqual({
+      x402Version: 2,
+      scheme: "exact",
+      network: "stellar:testnet",
+      extra: { areFeesSponsored: true },
+    });
     expect(body.extensions).toContain("bazaar");
     expect(body.signers["stellar:testnet"]).toEqual(["GSIGNER1"]);
     // OZ-client compat
@@ -158,5 +170,36 @@ describe("facilitator endpoints", () => {
 
   test("GET /discovery/search without query → 400", async () => {
     expect((await fetch(`${base}/discovery/search`)).status).toBe(400);
+  });
+
+  test("/supported advertises the upto kind with its contract address", async () => {
+    const body = await (await fetch(`${base}/supported`)).json();
+    const upto = body.kinds.find((k: { scheme: string }) => k.scheme === "upto");
+    expect(upto).toBeDefined();
+    expect(upto.network).toBe("stellar:testnet");
+    expect(upto.extra.uptoContract).toBe("CUPTO123");
+    expect(upto.extra.areFeesSponsored).toBe(true);
+  });
+
+  test("POST /upto/settle captures actual usage through the facilitator", async () => {
+    const res = await fetch(`${base}/upto/settle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ network: "stellar:testnet", authId: "abc123", actual: "1700000" }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.transaction).toBe("upto-tx-abc123");
+    expect(uptoCaptures).toContainEqual({ authId: "abc123", actual: "1700000" });
+  });
+
+  test("POST /upto/settle rejects an unknown network", async () => {
+    const res = await fetch(`${base}/upto/settle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ network: "eip155:8453", authId: "x", actual: "1" }),
+    });
+    expect(res.status).toBe(400);
   });
 });

@@ -46,10 +46,34 @@ export interface AppDeps {
    * behavior, unchanged.
    */
   credentialVerifier?: CredentialVerifier;
+  /**
+   * Optional `upto` scheme wiring (metered: authorize a cap, settle actual
+   * usage once). When present, /supported advertises the upto kind per network
+   * with its contract address, and POST /upto/settle performs the capture
+   * phase through the facilitator. See docs/scheme_upto_stellar.md.
+   */
+  upto?: UptoConfig;
   x402Version?: number;
 }
 
-export function buildApp({ schemes, store, engine, credentialVerifier, x402Version = 2 }: AppDeps): Express {
+export interface UptoConfig {
+  /** network id → deployed upto-authorization contract address */
+  contracts: Record<string, string>;
+  /** performs the on-chain capture; injected so tests need no network */
+  settler: UptoSettler;
+}
+
+export interface UptoSettler {
+  /** Settle actual usage against a prior authorization; returns the tx hash. */
+  settle(input: {
+    network: string;
+    contractId: string;
+    authId: string;
+    actual: string;
+  }): Promise<{ success: boolean; transaction?: string; errorReason?: string }>;
+}
+
+export function buildApp({ schemes, store, engine, credentialVerifier, upto, x402Version = 2 }: AppDeps): Express {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
 
@@ -64,12 +88,55 @@ export function buildApp({ schemes, store, engine, credentialVerifier, x402Versi
       network,
       extra: scheme.getExtra(network),
     }));
+    // Advertise the upto scheme per network it is deployed on, carrying the
+    // contract address a buyer needs to build the authorize call.
+    if (upto) {
+      for (const [network, contractId] of Object.entries(upto.contracts)) {
+        const base = schemes.get(network)?.getExtra(network) ?? { areFeesSponsored: true };
+        kinds.push({
+          x402Version,
+          scheme: "upto",
+          network,
+          extra: { ...base, uptoContract: contractId },
+        });
+      }
+    }
     const signers: Record<string, string[]> = {};
     for (const [network, scheme] of schemes) signers[network] = scheme.getSigners(network);
     res.json({ kinds, extensions: ["bazaar"], signers });
   };
   app.get("/supported", supported);
   app.post("/supported", supported);
+
+  // upto capture phase: settle the ACTUAL metered usage against a prior
+  // authorization, once, actual <= cap enforced on-chain by the contract.
+  app.post("/upto/settle", async (req, res) => {
+    if (!upto) {
+      res.status(400).json({ success: false, errorReason: "upto scheme not configured" });
+      return;
+    }
+    const body = req.body as { network?: string; authId?: string; actual?: string };
+    const contractId = body.network ? upto.contracts[body.network] : undefined;
+    if (!body.network || !contractId) {
+      res.status(400).json({ success: false, errorReason: `no upto contract for network ${body.network}` });
+      return;
+    }
+    if (!body.authId || !body.actual) {
+      res.status(400).json({ success: false, errorReason: "expected { network, authId, actual }" });
+      return;
+    }
+    try {
+      const result = await upto.settler.settle({
+        network: body.network,
+        contractId,
+        authId: body.authId,
+        actual: body.actual,
+      });
+      res.status(result.success ? 200 : 400).json(result);
+    } catch (err) {
+      res.status(500).json({ success: false, errorReason: `upto settle error: ${(err as Error).message}` });
+    }
+  });
 
   app.post("/verify", async (req, res) => {
     const parsed = parseBody(req, res);

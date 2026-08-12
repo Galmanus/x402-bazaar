@@ -7,3 +7,5 @@ target/
 .env.pubnet
 scripts/.keys-pubnet.json
 bazaar-pubnet.db
+bazaar-upto.db
+bazaar-pubnet.db

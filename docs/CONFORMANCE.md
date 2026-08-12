@@ -165,6 +165,24 @@ with a `--confirm` gate so nothing broadcasts by accident. Signer funded with 5 
 recipient with 3 XLM (1.5 locked as reserve+trustline); payer reused an existing pubnet
 account already holding USDC.
 
+## Run 7 — upto capture through the FACILITATOR HTTP surface (2026-08-12)
+
+Run 5 proved the contract; this proves the facilitator wiring. The facilitator was
+started with `UPTO_CONTRACT` set; `/supported` then advertised a second kind
+`{scheme: "upto", network: "stellar:testnet", extra.uptoContract: "CBSYBSM6…"}`
+alongside `exact`. A fresh authorization (cap 0.2 BAZ) was captured for actual 0.09 BAZ
+via `POST /upto/settle` — no CLI, the facilitator's `CliUptoSettler` submitted it:
+
+| step | evidence |
+|---|---|
+| /supported | advertises `upto` kind with the contract address |
+| POST /upto/settle | `{ success: true, transaction: "03bca83bd33628ebc13b434ff0eb808b861b08e9f22dd0f7fd9fb9337a3457bb" }`, ledger 4108153, source = facilitator signer |
+| replay via HTTP | `{ success: false, errorReason: "…Error(Contract, #7)" }` — AlreadySettled, on-chain |
+
+The metered capture path now runs end to end through the facilitator, not just direct
+contract calls. Facilitator-side verify of the authorize transaction (XDR decode against
+the requirements) is the remaining upto surface, scheduled with the upstream PR.
+
 ## Upstream finding (to be reported)
 
 `@x402/stellar@2.21.0`: client and facilitator each estimate ledger close time
