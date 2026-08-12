@@ -11,8 +11,15 @@
 
 **The marketplace layer for the agent economy on Stellar. Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.**
 
+> **⛓️ Live on Stellar MAINNET.** A real USDC payment settled on `stellar:pubnet`
+> through this facilitator — tx
+> [`07ecff0b`](https://stellar.expert/explorer/public/tx/07ecff0b17403d4500e230f7f3d23cea347a495f1d3e0a193bb0cc2b0e275dbb),
+> ledger 63918501, fees sponsored, non-custodial, auto-cataloged. Both networks
+> the RFP names as committed deliverables — testnet **and** mainnet — are live
+> and checkable. Full evidence: [docs/CONFORMANCE.md](docs/CONFORMANCE.md).
+
 [![tests](https://img.shields.io/badge/tests-21%20green%20%2B%20typecheck-4c1)](#reproduce)
-[![testnet](https://img.shields.io/badge/settlements-5%20testnet%20%2B%20MAINNET%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
+[![testnet](https://img.shields.io/badge/MAINNET-live%20on%20stellar%3Apubnet-brightgreen)](#seven-facts-you-can-check-in-minutes)
 [![search](https://img.shields.io/badge/search-nDCG%4010%200.833%2C%20measured-1f6feb)](#the-numbers)
 [![built on](https://img.shields.io/badge/%40x402%2Fstellar-verify%2Fsettle%20NOT%20reimplemented-8A2BE2)](#in-one-breath)
 [![license](https://img.shields.io/badge/license-Apache--2.0%2C%20zero%20copyleft-blue)](#license)
@@ -68,34 +75,42 @@ Claims discipline, because a checkable repo should check its own superlatives:
 If prior art exists that public search did not surface, this README will be
 corrected, in this section.
 
-## Six facts you can check in minutes
+## Seven facts you can check in minutes
 
-1. **A real $0.05 USDC purchase settled through THIS facilitator on testnet.**
-   Standard upstream seller (`@x402/express`) and buyer (`@x402/fetch`), zero
-   code specific to this facilitator on either side. Tx
+1. **A real USDC payment settled on Stellar MAINNET through THIS facilitator.**
+   `stellar:pubnet`, tx
+   [`07ecff0b`](https://stellar.expert/explorer/public/tx/07ecff0b17403d4500e230f7f3d23cea347a495f1d3e0a193bb0cc2b0e275dbb),
+   ledger 63918501, `successful: true`; recipient received 0.0100000 USDC
+   (confirmed on-chain), fee paid by the facilitator signer `GBVWCEV5…`. Same
+   stock upstream stack as testnet, only the network flipped. Both networks the
+   RFP calls committed deliverables are live.
+2. **The same, on testnet, at $0.05.** Standard upstream seller
+   (`@x402/express`) and buyer (`@x402/fetch`), zero code specific to this
+   facilitator on either side. Tx
    [`dae9569b`](https://stellar.expert/explorer/testnet/tx/dae9569bc631550c5ae24eec06e6fb58557146a00b7f7b1b92d2e28a591aa696),
    ledger 4079722, `successful: true`.
-2. **The buyer spent USDC and nothing else.** The transaction's fee account is
-   `GBGW26HB…` — the facilitator's signer — which paid 22,973 stroops. The
-   payer signed Soroban auth entries only: no envelope, no sequence number, no
-   XLM. `extra.areFeesSponsored: true` is advertised on `/supported` and
-   honored on-chain.
-3. **Non-custodial, visible in the events.** The settled transaction's
-   `fn_call` event is `transfer(payer → recipient, 500000)` on the USDC SAC —
+3. **The buyer spent USDC and nothing else.** On the testnet run the fee
+   account is `GBGW26HB…` — the facilitator's signer — which paid 22,973
+   stroops (on mainnet, the pubnet signer paid); the payer signed Soroban auth
+   entries only: no envelope, no sequence number, no XLM.
+   `extra.areFeesSponsored: true` is advertised on `/supported` and honored
+   on-chain on both networks.
+4. **Non-custodial, visible in the events.** The settled transaction's
+   `fn_call` event is `transfer(payer → recipient, …)` on the USDC SAC —
    funds never touch a facilitator address, and upstream verify rejects any
    payload whose auth entries involve one.
-4. **An MCP agent discovered and paid in the same session.** Tx
+5. **An MCP agent discovered and paid in the same session.** Tx
    [`904be536`](https://stellar.expert/explorer/testnet/tx/904be536ade79b89002d662ce9c295276a4209b45c6d5f1c9d0ce24459104412),
    ledger 4079750, was initiated by the `paid_call` tool of the MCP discovery
    server after `search_services("weather in my city")` found the freshly
    auto-cataloged service. Full agent loop: search → select → pay → receipt.
-5. **Search quality is measured, not asserted: nDCG@10 = 0.833.** On this
+6. **Search quality is measured, not asserted: nDCG@10 = 0.833.** On this
    repo's eval harness (24 services, 16 agent queries, graded relevance), the
    substring baseline scores 0.524, plain BM25 scores 0.497, and the shipped
    hybrid (BM25 + local MiniLM + reciprocal rank fusion) scores **0.833**,
    hit@1 12/16 — with a 23MB in-process model, no external API. Reproduce with
    one command below.
-6. **Catalog poisoning is a test, not a hope.** A payment payload carrying
+7. **Catalog poisoning is a test, not a hope.** A payment payload carrying
    `routeTemplate: "/users/../admin"` settles fine but is cataloged under the
    concrete URL — the traversal never becomes a catalog key. The validation is
    the upstream spec's own (`isValidRouteTemplate`, percent-decode before
@@ -195,17 +210,20 @@ tomorrow" vs "weather forecast") — the published tool-retrieval failure mode
 our own data. Fusion is reciprocal rank (k=60): no score calibration, degrades
 to BM25 if the model is absent or mid-download.
 
-Settlements through this facilitator (full evidence:
-[docs/CONFORMANCE.md](docs/CONFORMANCE.md)):
+Six settlements through this facilitator, every one checkable on-chain (full
+evidence and the two upstream findings: [docs/CONFORMANCE.md](docs/CONFORMANCE.md)):
 
-| | run 1 (buyer flow) | run 2 (MCP paid_call) |
-|---|---|---|
-| tx | `dae9569b…a696` | `904be536…4412` |
-| ledger | 4079722 | 4079750 |
-| amount | 500000 base units USDC ($0.05) | 500000 base units USDC ($0.05) |
-| fee payer | facilitator signer (22,973 stroops) | facilitator signer (22,973 stroops) |
-| payer spent | USDC only | USDC only |
-| catalog after | `settleCount: 1, distinctPayers: 1` | `settleCount: 2` — provenance accumulates |
+| run | network | what it proves | tx |
+|---|---|---|---|
+| 1 | testnet | stock buyer, $0.05 USDC | `dae9569b…a696` |
+| 2 | testnet | MCP agent `paid_call` — discover then pay | `904be536…4412` |
+| 3 | testnet | custom `__check_auth` contract account pays | `61f8872b…8c72` |
+| 4 | testnet | non-USDC SEP-41 token (BAZ) | `21923053…a8ea` |
+| 5 | testnet | `upto` authorize → settle → replay-refused | (contract `CBSYBSM6…`) |
+| **6** | **MAINNET** | **real USDC on `stellar:pubnet`** | [`07ecff0b…5dbb`](https://stellar.expert/explorer/public/tx/07ecff0b17403d4500e230f7f3d23cea347a495f1d3e0a193bb0cc2b0e275dbb) |
+
+Every run: fees sponsored by the facilitator signer, payer spends the asset only,
+funds move payer→recipient directly, resource auto-cataloged with provenance.
 
 ## Why this matters to Stellar
 
