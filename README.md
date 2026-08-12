@@ -257,8 +257,11 @@ SELLER_URL=http://localhost:4610 STELLAR_SECRET_KEY=S... \
 - **Testnet, not mainnet.** Both networks are one env var apart in code, but
   no pubnet settlement has been run from this repo yet. Mainnet comes after a
   third-party security review of the off-chain service, in that order.
-- **`exact` scheme only.** The `upto` scheme and its `scheme_upto_stellar.md`
-  network spec are roadmap — to be contributed upstream, not forked here.
+- **`exact` on the wire; `upto` proven on-chain but not yet wired into the
+  facilitator surface.** The upto contract ran its full authorize→settle→replay-
+  refused cycle on testnet (CONFORMANCE run 5) and the draft
+  `scheme_upto_stellar.md` lives in docs/ — upstream contribution and facilitator
+  wiring are scheduled work.
 - **Contract-account payers are proven, with a hand-rolled client.** A custom
   `__check_auth` account paid end to end (tx `61f8872b…`, CONFORMANCE run 3),
   but the upstream client signer is ed25519-only — our example signs the auth

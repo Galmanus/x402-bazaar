@@ -120,6 +120,24 @@ Setup (scripted, reproducible): issue classic asset → `stellar contract asset 
 real and hit here: without `changeTrust` on the recipient the settle fails with
 `op_no_trust`.
 
+## Run 5 — upto authorization cycle on-chain (2026-08-12)
+
+The `upto` scheme's contract (`contracts/upto-authorization`, 9 Rust tests) ran its
+full cycle live on testnet at `CBSYBSM6DFKDA5QR22PWLMLXSHGYUHHJ74W7HTXBZ76O5DSDA2EJLUTY`:
+
+| step | evidence |
+|---|---|
+| authorize | buyer-signed, cap 3000000 (0.3 BAZ), expiry 4105275; `approve` event to the contract; tx `4a96a995…` |
+| settle | called by an UNRELATED account (permissionless): `transfer` buyer→recipient of 1700000 (actual < cap) + `settled` event |
+| replay | second settle refused on-chain: `Error(Contract, #7) AlreadySettled` |
+
+Recipient binding and single settlement held with zero buyer involvement at capture
+time — the two guarantees SEP-41 allowances alone cannot give, which is why the RFP
+requires contract-free upto designs to document a weaker trust model. Draft network
+spec: docs/scheme_upto_stellar.md. Design requirements inherited from the
+riverrun/vineland audit (F8/F11/F4/F5) are stated in the contract doc comment and in
+docs/THREAT_MODEL.md.
+
 ## Upstream finding (to be reported)
 
 `@x402/stellar@2.21.0`: client and facilitator each estimate ledger close time
