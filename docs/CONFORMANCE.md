@@ -138,6 +138,33 @@ spec: docs/scheme_upto_stellar.md. Design requirements inherited from the
 riverrun/vineland audit (F8/F11/F4/F5) are stated in the contract doc comment and in
 docs/THREAT_MODEL.md.
 
+## Run 6 — MAINNET (stellar:pubnet), first real settlement (2026-08-12)
+
+The committed RFP deliverable: a live settlement on `stellar:pubnet` with real USDC.
+Same stock upstream stack (`@x402/express` seller, `@x402/fetch` buyer), the facilitator
+pointed at pubnet (`NETWORKS=stellar:pubnet`, `RPC_URL=https://mainnet.sorobanrpc.com`).
+
+| field | value |
+|---|---|
+| network | **stellar:pubnet (MAINNET)**, ledger 63918501, 2026-08-12T12:54:16Z |
+| tx hash | `07ecff0b17403d4500e230f7f3d23cea347a495f1d3e0a193bb0cc2b0e275dbb` |
+| successful | true |
+| payer | `GCEYFLGN…242P` (classic keypair, spent USDC only) |
+| recipient | `GAX76QEX…KAAQ` — received 0.0100000 USDC (confirmed on-chain) |
+| amount | $0.01 = 100000 base units USDC (7 decimals) |
+| fee account | `GBVWCEV5…5CU3` (facilitator signer, 23,479 stroops — sponsorship holds on mainnet) |
+| pubnet catalog | 1 entry, auto-cataloged, provenance firstSettleTx = this tx |
+
+Fee sponsorship, non-custodiality, automatic cataloging, and discovery all verified on
+mainnet exactly as on testnet. The buyer client needs an explicit `rpcUrl` on pubnet
+(there is no default Soroban RPC for mainnet) — the only pubnet-specific wiring.
+
+Account setup was scripted and dry-runnable: `scripts/setup-pubnet.mjs` generates the
+signer and recipient, funds them from a source account, and adds the recipient trustline,
+with a `--confirm` gate so nothing broadcasts by accident. Signer funded with 5 XLM,
+recipient with 3 XLM (1.5 locked as reserve+trustline); payer reused an existing pubnet
+account already holding USDC.
+
 ## Upstream finding (to be reported)
 
 `@x402/stellar@2.21.0`: client and facilitator each estimate ledger close time

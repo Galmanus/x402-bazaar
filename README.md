@@ -12,7 +12,7 @@
 **The marketplace layer for the agent economy on Stellar. Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.**
 
 [![tests](https://img.shields.io/badge/tests-21%20green%20%2B%20typecheck-4c1)](#reproduce)
-[![testnet](https://img.shields.io/badge/settlements-4%20real%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
+[![testnet](https://img.shields.io/badge/settlements-5%20testnet%20%2B%20MAINNET%2C%20on--chain%2C%20checkable-brightgreen)](#six-facts-you-can-check-in-minutes)
 [![search](https://img.shields.io/badge/search-nDCG%4010%200.833%2C%20measured-1f6feb)](#the-numbers)
 [![built on](https://img.shields.io/badge/%40x402%2Fstellar-verify%2Fsettle%20NOT%20reimplemented-8A2BE2)](#in-one-breath)
 [![license](https://img.shields.io/badge/license-Apache--2.0%2C%20zero%20copyleft-blue)](#license)
@@ -254,9 +254,11 @@ SELLER_URL=http://localhost:4610 STELLAR_SECRET_KEY=S... \
 
 ## Honest limits
 
-- **Testnet, not mainnet.** Both networks are one env var apart in code, but
-  no pubnet settlement has been run from this repo yet. Mainnet comes after a
-  third-party security review of the off-chain service, in that order.
+- **Mainnet is live, security review still pending.** A real USDC settlement
+  ran on `stellar:pubnet` (tx `07ecff0b…`, CONFORMANCE run 6). The third-party
+  security review (SDF Audit Bank) comes before any production mainnet TAG and
+  before this is advertised as a service others should rely on — the run proves
+  the path works, it does not certify the service.
 - **`exact` on the wire; `upto` proven on-chain but not yet wired into the
   facilitator surface.** The upto contract ran its full authorize→settle→replay-
   refused cycle on testnet (CONFORMANCE run 5) and the draft

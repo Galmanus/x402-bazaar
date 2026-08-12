@@ -35,7 +35,7 @@ app.use(
           // PRICE_AMOUNT (base units, 7 decimals) to charge any other token.
           price: process.env.PRICE_ASSET
             ? { amount: process.env.PRICE_AMOUNT ?? "1000000", asset: process.env.PRICE_ASSET }
-            : "$0.05",
+            : (process.env.PRICE_USD ?? "$0.05"),
           network: NETWORK as never,
           payTo,
           // Interim: client and facilitator estimate ledger close time independently

@@ -19,8 +19,11 @@ const seller = process.env.SELLER_URL ?? "http://localhost:4600";
 const facilitator = process.env.FACILITATOR_URL ?? "http://localhost:8402";
 
 const signer = createEd25519Signer(secret, NETWORK as never);
+// Pubnet (unlike testnet) has no default Soroban RPC; the client builds the
+// transfer via RPC, so mainnet requires an explicit rpcUrl.
+const rpcConfig = process.env.RPC_URL ? { url: process.env.RPC_URL } : undefined;
 const fetchWithPayment = wrapFetchWithPaymentFromConfig(fetch, {
-  schemes: [{ network: NETWORK as never, client: new ExactStellarScheme(signer) }],
+  schemes: [{ network: NETWORK as never, client: new ExactStellarScheme(signer, rpcConfig) }],
 });
 
 console.log("1. paying for GET /weather ...");
