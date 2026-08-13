@@ -201,5 +201,50 @@ describe("facilitator endpoints", () => {
       body: JSON.stringify({ network: "eip155:8453", authId: "x", actual: "1" }),
     });
     expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.code).toBe("upto_unknown_network");
+    expect(body.reason).toBeTruthy();
+  });
+
+  // RFP acceptance: "a non null reason on every rejection."
+  test("every rejection path carries a stable machine-readable code + non-null reason", async () => {
+    const cases: Array<{ res: Response; code: string }> = [
+      {
+        res: await fetch(`${base}/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ x402Version: 2 }),
+        }),
+        code: "malformed_request",
+      },
+      {
+        res: await fetch(`${base}/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            x402Version: 2,
+            paymentPayload,
+            paymentRequirements: { ...requirements, network: "eip155:8453" },
+          }),
+        }),
+        code: "unsupported_scheme_network",
+      },
+      { res: await fetch(`${base}/discovery/search`), code: "missing_query" },
+      {
+        res: await fetch(`${base}/upto/settle`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ network: "stellar:testnet", authId: "x" }),
+        }),
+        code: "upto_missing_fields",
+      },
+    ];
+    for (const c of cases) {
+      expect(c.res.status).toBeGreaterThanOrEqual(400);
+      const body = await c.res.json();
+      expect(body.code, `code for ${c.code}`).toBe(c.code);
+      expect(body.reason, `reason for ${c.code}`).toBeTruthy();
+      expect(typeof body.reason).toBe("string");
+    }
   });
 });

@@ -20,6 +20,7 @@ import {
   type CredentialVerifier,
   type IngestOutcome,
 } from "@x402-bazaar/catalog";
+import { ErrorCode, requestReject, settleReject, verifyReject } from "./errors.ts";
 
 /** The subset of SchemeNetworkFacilitator this app needs. */
 export interface FacilitatorScheme {
@@ -112,17 +113,17 @@ export function buildApp({ schemes, store, engine, credentialVerifier, upto, x40
   // authorization, once, actual <= cap enforced on-chain by the contract.
   app.post("/upto/settle", async (req, res) => {
     if (!upto) {
-      res.status(400).json({ success: false, errorReason: "upto scheme not configured" });
+      res.status(400).json(settleReject(ErrorCode.UPTO_NOT_CONFIGURED, "upto scheme not configured"));
       return;
     }
     const body = req.body as { network?: string; authId?: string; actual?: string };
     const contractId = body.network ? upto.contracts[body.network] : undefined;
     if (!body.network || !contractId) {
-      res.status(400).json({ success: false, errorReason: `no upto contract for network ${body.network}` });
+      res.status(400).json(settleReject(ErrorCode.UPTO_UNKNOWN_NETWORK, `no upto contract for network ${body.network}`));
       return;
     }
     if (!body.authId || !body.actual) {
-      res.status(400).json({ success: false, errorReason: "expected { network, authId, actual }" });
+      res.status(400).json(settleReject(ErrorCode.UPTO_MISSING_FIELDS, "expected { network, authId, actual }"));
       return;
     }
     try {
@@ -132,9 +133,13 @@ export function buildApp({ schemes, store, engine, credentialVerifier, upto, x40
         authId: body.authId,
         actual: body.actual,
       });
-      res.status(result.success ? 200 : 400).json(result);
+      if (result.success) {
+        res.status(200).json(result);
+      } else {
+        res.status(400).json(settleReject(ErrorCode.UPTO_SETTLE_ERROR, result.errorReason ?? "upto settle failed"));
+      }
     } catch (err) {
-      res.status(500).json({ success: false, errorReason: `upto settle error: ${(err as Error).message}` });
+      res.status(500).json(settleReject(ErrorCode.UPTO_SETTLE_ERROR, `upto settle error: ${(err as Error).message}`));
     }
   });
 
@@ -146,7 +151,7 @@ export function buildApp({ schemes, store, engine, credentialVerifier, upto, x40
     try {
       res.json(await scheme.verify(parsed.payload, parsed.requirements));
     } catch (err) {
-      res.status(500).json({ isValid: false, invalidReason: `verify error: ${(err as Error).message}` });
+      res.status(500).json(verifyReject(ErrorCode.VERIFY_ERROR, `verify error: ${(err as Error).message}`));
     }
   });
 
@@ -192,7 +197,7 @@ export function buildApp({ schemes, store, engine, credentialVerifier, upto, x40
       }
       res.json(result);
     } catch (err) {
-      res.status(500).json({ success: false, errorReason: `settle error: ${(err as Error).message}` });
+      res.status(500).json(settleReject(ErrorCode.SETTLE_ERROR, `settle error: ${(err as Error).message}`));
     }
   });
 
@@ -218,7 +223,7 @@ export function buildApp({ schemes, store, engine, credentialVerifier, upto, x40
     const q = req.query;
     const query = str(q.query);
     if (!query) {
-      res.status(400).json({ error: "query parameter is required" });
+      res.status(400).json(requestReject(ErrorCode.MISSING_QUERY, "query parameter is required"));
       return;
     }
     const page = await engine.search({
@@ -253,7 +258,7 @@ function parseBody(
     paymentRequirements?: PaymentRequirements;
   };
   if (!body?.paymentPayload || !body?.paymentRequirements) {
-    res.status(400).json({ error: "expected {x402Version, paymentPayload, paymentRequirements}" });
+    res.status(400).json(requestReject(ErrorCode.MALFORMED_REQUEST, "expected {x402Version, paymentPayload, paymentRequirements}"));
     return undefined;
   }
   return { payload: body.paymentPayload, requirements: body.paymentRequirements };
@@ -274,10 +279,12 @@ function findScheme(
 }
 
 function unsupportedNetwork(res: Response, requirements: PaymentRequirements): void {
-  res.status(400).json({
-    isValid: false,
-    invalidReason: `unsupported scheme/network: ${requirements.scheme}/${requirements.network}`,
-  });
+  res.status(400).json(
+    verifyReject(
+      ErrorCode.UNSUPPORTED_SCHEME_NETWORK,
+      `unsupported scheme/network: ${requirements.scheme}/${requirements.network}`,
+    ),
+  );
 }
 
 function payerFromPayload(payload: PaymentPayload): string | undefined {

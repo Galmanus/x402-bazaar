@@ -305,6 +305,9 @@ SELLER_URL=http://localhost:4610 STELLAR_SECRET_KEY=S... \
   hidden behind a "verified" badge.
 - **`node:sqlite` is experimental** in Node 22 and isolated behind the
   `CatalogStore` interface; swapping engines is a one-file change.
+- **Every rejection carries a stable machine-readable `code` + non-null
+  `reason`** (packages/facilitator/src/errors.ts) — the RFP's acceptance
+  requirement, tested across the verify/settle/discovery/upto paths.
 - **CI exists but lives on branch `ci-pending`** — the repo's push token
   lacked `workflow` scope at creation time.
 
