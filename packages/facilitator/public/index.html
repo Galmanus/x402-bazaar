@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>x402-bazaar · live demo</title>
+<style>
+  :root {
+    --bg:#0b0d10; --bg2:#12161b; --ink:#e8edf2; --dim:#8a97a6; --faint:#4a5563;
+    --green:#3fb950; --blue:#58a6ff; --violet:#a371f7; --gold:#e3b341; --line:#222a33;
+    --mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+    --sans:Inter,-apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+  a{color:var(--blue);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header h1{font-family:var(--mono);font-size:34px;margin:0 0 6px}
+  header h1 .v{color:var(--violet)} header h1 .g{color:var(--green)}
+  .sub{color:var(--dim);font-size:17px;margin:0 0 8px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+  .pill{font-size:12px;font-family:var(--mono);background:var(--bg2);border:1px solid var(--line);
+        color:var(--dim);padding:5px 10px;border-radius:99px}
+  .pill b{color:var(--ink)}
+  .pq{margin:22px 0;padding:16px 18px;border:1px solid var(--violet);border-radius:12px;background:#140f22}
+  .pq h3{margin:0 0 6px;font-size:16px;color:var(--violet)}
+  .pq p{margin:0;color:var(--dim);font-size:14px}
+  section{margin-top:34px}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:0 0 14px;font-weight:700}
+  .searchbar{display:flex;gap:10px}
+  .searchbar input{flex:1;background:var(--bg2);border:1.5px solid var(--line);border-radius:10px;
+        color:var(--ink);font-size:17px;padding:14px 16px;font-family:var(--sans);outline:none}
+  .searchbar input:focus{border-color:var(--blue)}
+  .searchbar button{background:var(--blue);color:#04121f;border:0;border-radius:10px;font-weight:700;
+        font-size:16px;padding:0 22px;cursor:pointer}
+  .hint{color:var(--faint);font-size:13px;margin-top:8px}
+  .card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:12px}
+  .card .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .card .name{font-size:20px;font-weight:700}
+  .card .price{font-family:var(--mono);color:var(--green);font-size:15px;white-space:nowrap}
+  .card .desc{color:var(--dim);font-size:15px;margin:6px 0 10px}
+  .card .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .tag{font-size:12px;background:#0e141a;border:1px solid var(--line);color:var(--dim);padding:3px 9px;border-radius:99px}
+  .prov{font-family:var(--mono);font-size:12.5px;color:var(--faint);display:flex;flex-wrap:wrap;gap:14px}
+  .prov b{color:var(--gold)}
+  .prov a{font-size:12.5px}
+  .empty{color:var(--faint);font-size:15px;padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+  footer{margin-top:50px;color:var(--faint);font-size:13px;border-top:1px solid var(--line);padding-top:20px}
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .step{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .step .n{font-family:var(--mono);color:var(--green);font-size:12px}
+  .step .t{font-size:14px;margin-top:3px}
+  .live{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--green);
+        box-shadow:0 0 8px var(--green);margin-right:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>x402<span class="v">-</span>bazaar<span class="g">▋</span></h1>
+    <p class="sub">the marketplace layer for the agent economy on Stellar — find a service, pay in USDC, and the catalog writes itself.</p>
+    <div class="pills" id="pills"><span class="pill">connecting…</span></div>
+  </header>
+
+  <div class="pq">
+    <h3>🛡️ post-quantum, anonymous agent identity</h3>
+    <p>the only x402 facilitator built around a post-quantum, <b>anonymous</b> agent credential — an agent proves it belongs to an allowed set without revealing which agent it is, and the catalog counts <b>distinct credential holders</b>, not addresses. Hash-based Circle-STARK, nothing Shor can break. Verifier live on mainnet in <a href="https://github.com/Galmanus/pq402">pq402</a>.</p>
+  </div>
+
+  <section>
+    <h2>Search the Bazaar — in plain language</h2>
+    <div class="searchbar">
+      <input id="q" placeholder="e.g. what is the weather in my city" autocomplete="off" />
+      <button id="go">Search</button>
+    </div>
+    <div class="hint">hybrid BM25 + local-embedding ranking · <span id="nudge">try: “convert currency”, “stock price”, “translate text”</span></div>
+    <div id="results" style="margin-top:16px"></div>
+  </section>
+
+  <section>
+    <h2><span class="live"></span>Live catalog — written by real settlements</h2>
+    <div id="catalog"><div class="empty">loading…</div></div>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <div class="flow">
+      <div class="step"><div class="n">1 · 402</div><div class="t">agent hits a paid API, gets payment terms</div></div>
+      <div class="step"><div class="n">2 · sign</div><div class="t">signs a USDC auth entry — no XLM, no account</div></div>
+      <div class="step"><div class="n">3 · settle</div><div class="t">facilitator verifies, sponsors the fee, submits</div></div>
+      <div class="step"><div class="n">4 · catalog</div><div class="t">the service is cataloged automatically, with provenance</div></div>
+      <div class="step"><div class="n">5 · discover</div><div class="t">any agent finds it in natural language</div></div>
+    </div>
+  </section>
+
+  <footer>
+    Built on the Apache-2.0 <a href="https://www.npmjs.com/package/@x402/stellar">@x402/stellar</a> package · verify &amp; settle not reimplemented ·
+    <a href="https://github.com/Galmanus/x402-bazaar">source</a> ·
+    <a href="https://github.com/Galmanus/x402-bazaar/blob/main/docs/CONFORMANCE.md">on-chain evidence</a>
+  </footer>
+</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const esc = (s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const explorer = (net,tx)=> net==="stellar:pubnet"
+  ? `https://stellar.expert/explorer/public/tx/${tx}`
+  : `https://stellar.expert/explorer/testnet/tx/${tx}`;
+
+function card(item){
+  const a = (item.accepts&&item.accepts[0])||{};
+  const prov = (item.extensions&&item.extensions["x402-bazaar/provenance"])||{};
+  const net = a.network||"";
+  const price = a.amount ? `${(Number(a.amount)/1e7).toLocaleString(undefined,{maximumFractionDigits:7})} ${net.includes("pubnet")?"USDC*":"USDC"}` : "";
+  const txShort = (t)=> t ? esc(t.slice(0,8))+"…" : "—";
+  const tx = prov.lastSettleTx;
+  return `<div class="card">
+    <div class="top"><div class="name">${esc(item.serviceName||item.resource)}</div><div class="price">${esc(price)}</div></div>
+    <div class="desc">${esc(item.description||"")}</div>
+    <div class="tags">${(item.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}<span class="tag">${esc(net)}</span></div>
+    <div class="prov">
+      <span>settlements <b>${prov.settleCount??0}</b></span>
+      <span>distinct payers <b>${prov.distinctPayers??0}</b></span>
+      ${prov.distinctCredentialHolders?`<span>credential holders <b>${prov.distinctCredentialHolders}</b></span>`:""}
+      ${tx?`<span>last tx <a href="${explorer(net,tx)}" target="_blank">${txShort(tx)}</a></span>`:""}
+    </div>
+  </div>`;
+}
+
+async function loadSupported(){
+  try{
+    const r = await fetch("/supported"); const d = await r.json();
+    const nets = [...new Set((d.kinds||[]).map(k=>k.network))];
+    const schemes = [...new Set((d.kinds||[]).map(k=>k.scheme))];
+    const sponsored = (d.kinds||[]).some(k=>k.extra&&k.extra.areFeesSponsored);
+    $("#pills").innerHTML = [
+      ...nets.map(n=>`<span class="pill">network <b>${esc(n)}</b></span>`),
+      `<span class="pill">schemes <b>${schemes.map(esc).join(", ")}</b></span>`,
+      sponsored?`<span class="pill">fees <b>sponsored</b></span>`:"",
+      `<span class="pill">buyer needs <b>USDC only</b></span>`,
+    ].join("");
+  }catch(e){ $("#pills").innerHTML = `<span class="pill">facilitator offline</span>`; }
+}
+async function loadCatalog(){
+  try{
+    const r = await fetch("/discovery/resources?limit=50"); const d = await r.json();
+    const items = d.items||[];
+    $("#catalog").innerHTML = items.length ? items.map(card).join("")
+      : `<div class="empty">no services cataloged yet — the catalog fills itself as agents pay.</div>`;
+  }catch(e){ $("#catalog").innerHTML = `<div class="empty">could not reach the facilitator.</div>`; }
+}
+async function search(){
+  const q = $("#q").value.trim(); if(!q) return;
+  $("#results").innerHTML = `<div class="empty">searching…</div>`;
+  try{
+    const r = await fetch("/discovery/search?query="+encodeURIComponent(q)); const d = await r.json();
+    const items = d.resources||[];
+    $("#results").innerHTML = items.length ? items.map(card).join("")
+      : `<div class="empty">nothing matched “${esc(q)}”.</div>`;
+  }catch(e){ $("#results").innerHTML = `<div class="empty">search failed.</div>`; }
+}
+$("#go").onclick = search;
+$("#q").addEventListener("keydown",e=>{ if(e.key==="Enter") search(); });
+loadSupported(); loadCatalog();
+</script>
+</body>
+</html>

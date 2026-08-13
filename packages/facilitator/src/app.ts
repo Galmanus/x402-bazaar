@@ -77,6 +77,16 @@ export interface UptoSettler {
 export function buildApp({ schemes, store, engine, credentialVerifier, upto, x402Version = 2 }: AppDeps): Express {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
+  // permissive CORS: discovery is public, agents/browsers call it cross-origin
+  app.use((_req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    next();
+  });
+
+  // Demo UI, served at / so hosting the facilitator = hosting the clickable demo.
+  const publicDir = new URL("../public/", import.meta.url).pathname;
+  app.use(express.static(publicDir));
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, networks: [...schemes.keys()], catalogSize: store.all().length });
