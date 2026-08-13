@@ -1,110 +1,116 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
-import { C, MONO, Screen, In, Cursor, typed, hexA, Fade } from "./cinematic";
+import { Stage, Robot, Bubble, Vault, Caption, Pop, Fade, T, hexA } from "./toon";
 
-const P = C.violet;
+const ease = (f: number, a: number, b: number, x: number, y: number) =>
+  interpolate(f, [a, b], [x, y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
-// 1 — the RPC forgets
-const Amnesia: React.FC = () => {
+// 1 — the library forgets after ~7 days
+const Forget: React.FC = () => {
   const f = useCurrentFrame();
-  const decay = interpolate(f, [30, 90], [1, 0.12], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const books = ["📕", "📗", "📘", "📙", "📕", "📗", "📘"];
   return (
-    <Screen tint="#130f1e" sweep={P}>
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <In><div style={{ color: C.amber, fontSize: 24, letterSpacing: 2 }}>⏳ THE RPC FORGETS</div></In>
-        <In start={8}><div style={{ color: C.dim, fontSize: 22, marginTop: 14 }}>a private pool&apos;s history ages out — measured window <b style={{ color: C.ink }}>7.02 days</b></div></In>
-        <div style={{ display: "flex", gap: 10, marginTop: 40 }}>
-          {Array.from({ length: 15 }).map((_, i) => {
-            const gone = interpolate(f, [30 + i * 3, 40 + i * 3], [1, i < 12 ? 0.1 : 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-            return <div key={i} style={{ width: 34, height: 46, borderRadius: 6, background: hexA(P, 0.22 * gone), border: `1.5px solid ${hexA(P, gone)}` }} />;
-          })}
-        </div>
-        <In start={92} style={{ opacity: decay < 0.2 ? 1 : undefined }}><div style={{ marginTop: 34, color: C.dim, fontSize: 20 }}>the compliance trail vanishes exactly when an auditor needs it</div></In>
-      </AbsoluteFill>
-    </Screen>
-  );
-};
-
-// 2 — serve it, prove it complete
-const Serve: React.FC = () => {
-  const f = useCurrentFrame();
-  const rows: [string, string, number][] = [
-    ["durable index", "serve the history the RPC dropped", 12],
-    ["gap-free proof", "an append-only sequence, complete by index", 34],
-    ["hash-based attestation", "Circle STARK · no curves · no pairings · no setup", 56],
-  ];
-  return (
-    <Screen tint="#130f1e" sweep={P}>
-      <AbsoluteFill style={{ padding: "80px 170px", fontFamily: MONO }}>
-        <In><div style={{ color: P, fontSize: 24, letterSpacing: 2, marginBottom: 8 }}>◆ SO WE REBUILD IT — AND PROVE IT</div></In>
-        <In start={4}><div style={{ color: C.dim, fontSize: 20, marginBottom: 32 }}>15 real ASP leaves, captured from testnet · nothing mocked</div></In>
-        {rows.map(([k, v, s], i) => {
-          const op = interpolate(f, [s, s + 8], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-          return (
-            <div key={i} style={{ opacity: op, display: "flex", alignItems: "baseline", gap: 22, marginBottom: 20 }}>
-              <span style={{ color: P, fontSize: 27, fontWeight: 800, width: 430 }}>{k}</span>
-              <span style={{ color: C.ink, fontSize: 22 }}>{v}</span>
-            </div>
-          );
+    <Stage a="#1a1430" b="#0f0b1c">
+      <div style={{ position: "absolute", left: 960, top: 200, transform: "translate(-50%,-50%)", fontSize: 40, color: T.amber, fontWeight: 800 }}>⏳ 7 days…</div>
+      <div style={{ position: "absolute", left: "50%", top: 400, transform: "translateX(-50%)", display: "flex", gap: 24 }}>
+        {books.map((b, i) => {
+          const gone = ease(f, 30 + i * 8, 44 + i * 8, 1, i < 5 ? 0 : 1);
+          return <div key={i} style={{ fontSize: 72, opacity: gone, transform: `translateY(${(1 - gone) * -40}px)` }}>{b}</div>;
         })}
-      </AbsoluteFill>
-    </Screen>
+      </div>
+      <Robot x={430} y={620} color={T.blue} face="o_o" look={1} />
+      <Caption at={6} accent={T.ink}>the network <b>forgets</b> its private-payment history after about a week</Caption>
+    </Stage>
   );
 };
 
-// 3 — verified on-chain, gates state
-const OnChain: React.FC = () => {
+// 2 — the librarian keeps it all, complete
+const Keep: React.FC = () => {
   const f = useCurrentFrame();
-  const flash = interpolate(f, [34, 40, 54], [0, 0.36, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const glow = interpolate(f, [14, 44], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return (
-    <Screen tint="#130f1e">
-      <AbsoluteFill style={{ background: `rgba(163,113,247,${flash})` }} />
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <In><div style={{ color: P, fontSize: 22, letterSpacing: 2, fontWeight: 800, textAlign: "center", maxWidth: 1150 }}>◆ FIRST TRANSPARENT POST-QUANTUM PROOF VERIFIED ON-CHAIN ON STELLAR</div></In>
-        <In start={14}>
-          <div style={{ marginTop: 24, padding: "28px 42px", borderRadius: 16, background: "#0f0c17", border: `1.5px solid ${P}`, boxShadow: `0 0 ${glow * 52}px ${hexA(P, 0.3 * glow)}` }}>
-            <div style={{ color: C.dim, fontSize: 17, marginBottom: 10 }}>the PQ proof GATES on-chain state · testnet</div>
-            <div style={{ color: C.green, fontSize: 24 }}>✓ a2c3227c…  <span style={{ color: C.dim, fontSize: 18 }}>valid proof admits the root → emits `admitted`</span></div>
-            <div style={{ color: C.red, fontSize: 24, marginTop: 8 }}>✕ tampered proof  <span style={{ color: C.dim, fontSize: 18 }}>refused, same transaction</span></div>
-            <div style={{ display: "flex", gap: 44, marginTop: 20 }}>
-              {[["tests", "31 JS + 15 Rust"], ["trusted setup", "none"], ["curves / pairings", "zero"]].map(([k, v]) => (
-                <div key={k}><div style={{ color: C.faint, fontSize: 15 }}>{k}</div><div style={{ color: P, fontSize: 21, fontWeight: 700, marginTop: 4 }}>{v}</div></div>
-              ))}
-            </div>
-          </div>
-        </In>
-        <In start={34}><div style={{ marginTop: 24, color: C.dim, fontSize: 21, textAlign: "center", maxWidth: 1050 }}>a root counts as compliance-valid <b style={{ color: C.ink }}>only if</b> the post-quantum proof verifies in the same transaction</div></In>
-      </AbsoluteFill>
-    </Screen>
+    <Stage a="#1a1430" b="#0f0b1c">
+      <Robot x={470} y={520} color={T.violet} face="^_^" look={1} z={2} />
+      <Bubble x={520} y={380} at={8} color={T.violet} tail="left">i keep every page 📚</Bubble>
+      <div style={{ position: "absolute", left: 1050, top: 440, transform: "translate(-50%,-50%)", display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16 }}>
+        {Array.from({ length: 15 }).map((_, i) => (
+          <Pop key={i} at={14 + i * 4}><div style={{ fontSize: 46 }}>📄</div></Pop>
+        ))}
+      </div>
+      <Caption at={6} accent={T.violet}>a librarian robot keeps the <b>whole history</b> — and proves none is missing</Caption>
+    </Stage>
   );
 };
 
-const Close: React.FC = () => {
+// 3 — magic seal (STARK), tamper caught
+const Seal: React.FC = () => {
   const f = useCurrentFrame();
+  const glow = ease(f, 16, 36, 0, 1);
   return (
-    <Screen tint="#130f1e">
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <div style={{ opacity: interpolate(f, [0, 12], [0, 1], { extrapolateRight: "clamp" }), color: C.ink, fontSize: 52, fontWeight: 800, textAlign: "center", maxWidth: 1200 }}>compliance that outlives the pairing</div>
-        <In start={18}><div style={{ color: C.dim, fontSize: 21, marginTop: 22 }}>every BN254 proof breaks under quantum · this one only bends · MIT</div></In>
-        <In start={32}><div style={{ color: P, fontSize: 24, marginTop: 28 }}>github.com/Galmanus/spp-compliance-layer</div></In>
+    <Stage a="#1a1430" b="#0f0b1c">
+      <Pop at={10} style={{ position: "absolute", left: 720, top: 440 }}>
+        <div style={{ transform: "translate(-50%,-50%)", fontSize: 130, filter: `drop-shadow(0 0 ${glow * 30}px ${hexA(T.violet, 0.9)})` }}>🕯️</div>
+      </Pop>
+      <div style={{ position: "absolute", left: 720, top: 620, transform: "translate(-50%,-50%)", color: T.violet, fontSize: 26, fontWeight: 700 }}>the seal ✔ complete &amp; untouched</div>
+      <Robot x={1300} y={520} color={T.red} face=">_<" look={-1} />
+      <Bubble x={1300} y={380} at={40} color={T.red} tail="down">let me sneak a page in… ✋</Bubble>
+      {f > 60 && <Pop at={62} style={{ position: "absolute", left: 1300, top: 520 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 90 }}>❌</div></Pop>}
+      <Caption at={62} accent={T.ink}>a <b>magic seal</b> proves the history is whole — tamper with it and the seal breaks</Caption>
+    </Stage>
+  );
+};
+
+// 4 — quantum-proof: others melt, this holds
+const Quantum: React.FC = () => {
+  const f = useCurrentFrame();
+  const melt = ease(f, 24, 54, 0, 1);
+  return (
+    <Stage a="#1a1430" b="#0f0b1c">
+      <Robot x={960} y={220} color={T.red} scale={1.1} face=">_<" />
+      <div style={{ position: "absolute", left: 960, top: 110, transform: "translate(-50%,-50%)", fontSize: 40 }}>⚛️</div>
+      {/* others: melting seals */}
+      <div style={{ position: "absolute", left: 560, top: 470, transform: "translate(-50%,-50%)", textAlign: "center", opacity: 1 - melt * 0.85 }}>
+        <div style={{ fontSize: 90, transform: `translateY(${melt * 60}px) scaleY(${1 - melt * 0.6})` }}>🔏</div>
+        <div style={{ color: T.dim, fontSize: 22 }}>everyone else&apos;s seal (BN254)</div>
+      </div>
+      {/* ours: holds */}
+      <div style={{ position: "absolute", left: 1360, top: 470, transform: "translate(-50%,-50%)", textAlign: "center" }}>
+        <div style={{ fontSize: 96, filter: `drop-shadow(0 0 20px ${hexA(T.violet, 0.9)})` }}>🕯️</div>
+        <div style={{ color: T.violet, fontSize: 22, fontWeight: 700 }}>ours — hash-based</div>
+      </div>
+      {f > 56 && <Pop at={58} style={{ position: "absolute", left: 1360, top: 400 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 44 }}>✅</div></Pop>}
+      <Caption at={56} accent={T.violet}>a future quantum computer <b>melts</b> every other seal — this one <b>holds</b></Caption>
+    </Stage>
+  );
+};
+
+// 5 — gate on-chain
+const Gate: React.FC = () => {
+  const f = useCurrentFrame();
+  const open = ease(f, 24, 60, 0, 1);
+  return (
+    <Stage a="#141a12" b="#0b0f0a">
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <Pop><div style={{ fontSize: 84 }}>🤖📚🕯️➡️🔓</div></Pop>
+        <div style={{ marginTop: 16, color: T.ink, fontSize: 50, fontWeight: 900, textAlign: "center", opacity: ease(f, 12, 24, 0, 1) }}>compliance that outlives the quantum computer</div>
+        <div style={{ marginTop: 14, color: T.violet, fontSize: 27, fontWeight: 700, opacity: ease(f, 26, 38, 0, 1) }}>the door only opens if the seal checks out — on-chain, on Stellar</div>
+        <div style={{ marginTop: 24, color: T.dim, fontSize: 25, fontFamily: "monospace", opacity: ease(f, 40, 52, 0, 1) }}>github.com/Galmanus/spp-compliance-layer</div>
       </AbsoluteFill>
-    </Screen>
+    </Stage>
   );
 };
 
 export const SPP: React.FC = () => {
-  const S = [126, 126, 144, 108];
-  const XF = 10;
+  const S = [120, 114, 132, 126, 120];
+  const XF = 12;
   let t = 0;
   const at = (l: number) => { const s = t; t += l - XF; return s; };
+  const scenes = [<Forget />, <Keep />, <Seal />, <Quantum />, <Gate />];
   return (
     <AbsoluteFill>
-      <Sequence from={at(S[0])} durationInFrames={S[0]}><Fade dur={S[0]} xf={XF}><Amnesia /></Fade></Sequence>
-      <Sequence from={at(S[1])} durationInFrames={S[1]}><Fade dur={S[1]} xf={XF}><Serve /></Fade></Sequence>
-      <Sequence from={at(S[2])} durationInFrames={S[2]}><Fade dur={S[2]} xf={XF}><OnChain /></Fade></Sequence>
-      <Sequence from={at(S[3])} durationInFrames={S[3]}><Fade dur={S[3]} xf={XF}><Close /></Fade></Sequence>
+      {scenes.map((sc, i) => (
+        <Sequence key={i} from={at(S[i])} durationInFrames={S[i]}><Fade dur={S[i]} xf={XF}>{sc}</Fade></Sequence>
+      ))}
     </AbsoluteFill>
   );
 };
-export const SPP_LEN = 126 + 126 + 144 + 108 - 10 * 3;
+export const SPP_LEN = 120 + 114 + 132 + 126 + 120 - 12 * 4;

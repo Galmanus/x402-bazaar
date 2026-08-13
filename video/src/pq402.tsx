@@ -1,132 +1,117 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
-import { C, MONO, Screen, In, Cursor, typed, hexA, Fade } from "./cinematic";
+import { Stage, Robot, Coin, Bubble, Vault, Caption, Fly, Pop, Fade, T, hexA } from "./toon";
 
-const V = C.violet;
+const ease = (f: number, a: number, b: number, x: number, y: number) =>
+  interpolate(f, [a, b], [x, y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
-const Open: React.FC = () => {
-  const f = useCurrentFrame();
-  const cmd = "$ agent pay https://api/premium";
-  const t = typed(cmd, f, 6, 1.8);
-  const done = t.length >= cmd.length;
-  return (
-    <Screen tint="#140f1c" sweep={V}>
-      <AbsoluteFill style={{ justifyContent: "center", paddingLeft: 180, fontFamily: MONO }}>
-        <div style={{ fontSize: 34, color: C.ink }}><span style={{ color: V }}>{t}</span>{!done && <Cursor color={V} />}</div>
-        {done && (
-          <div style={{ marginTop: 28, fontSize: 26, lineHeight: 1.85 }}>
-            <In start={38}><span style={{ color: C.amber }}>← 402</span> <span style={{ color: C.dim }}>· x402 on Stellar · pay in USDC</span></In>
-            <In start={54}><span style={{ color: C.dim }}>but the unlock wants more than money —</span></In>
-            <In start={70}><span style={{ color: V }}>prove you're allowed to buy.</span> <span style={{ color: C.dim }}>a Soroban contract will check.</span></In>
-          </div>
-        )}
-      </AbsoluteFill>
-    </Screen>
-  );
-};
-
-const Credential: React.FC = () => {
-  const f = useCurrentFrame();
-  const rows: [string, string, number][] = [
-    ["set membership", "you belong to an allowed set", 12],
-    ["zero knowledge", "the seller never learns which member", 34],
-    ["post-quantum", "a hash-based Circle STARK — nothing Shor breaks", 56],
-  ];
-  return (
-    <Screen tint="#140f1c" sweep={V}>
-      <AbsoluteFill style={{ padding: "84px 180px", fontFamily: MONO }}>
-        <In><div style={{ color: V, fontSize: 24, letterSpacing: 2, marginBottom: 8 }}>◆ THE CREDENTIAL</div></In>
-        <In start={4}><div style={{ color: C.dim, fontSize: 20, marginBottom: 34 }}>checked by contract code — not by a server you have to trust</div></In>
-        {rows.map(([k, v, s], i) => {
-          const op = interpolate(f, [s, s + 8], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-          return (
-            <div key={i} style={{ opacity: op, display: "flex", alignItems: "baseline", gap: 24, marginBottom: 20 }}>
-              <span style={{ color: V, fontSize: 30, fontWeight: 800, width: 320 }}>{k}</span>
-              <span style={{ color: C.ink, fontSize: 24 }}>{v}</span>
-            </div>
-          );
-        })}
-      </AbsoluteFill>
-    </Screen>
-  );
-};
-
-const Proof: React.FC = () => {
-  const f = useCurrentFrame();
-  const flash = interpolate(f, [30, 36, 50], [0, 0.36, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const glow = interpolate(f, [14, 44], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return (
-    <Screen tint="#140f1c">
-      <AbsoluteFill style={{ background: `rgba(163,113,247,${flash})` }} />
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <In><div style={{ color: V, fontSize: 24, letterSpacing: 3, fontWeight: 800 }}>◆ VERIFIED IN THE CONTRACT · ONE COMMAND · TESTNET</div></In>
-        <In start={14}>
-          <div style={{ marginTop: 24, padding: "28px 42px", borderRadius: 16, background: "#100c17", border: `1.5px solid ${V}`, boxShadow: `0 0 ${glow * 52}px ${hexA(V, 0.3 * glow)}` }}>
-            <div style={{ color: C.green, fontSize: 24, marginBottom: 8 }}>✓ dfca24a0…  <span style={{ color: C.dim, fontSize: 18 }}>nullifier burn</span></div>
-            <div style={{ color: C.green, fontSize: 24 }}>✓ 9a4ac383…  <span style={{ color: C.dim, fontSize: 18 }}>USDC settlement</span></div>
-            <div style={{ display: "flex", gap: 44, marginTop: 20 }}>
-              {[["credential", "Circle STARK"], ["trusted setup", "none"], ["agent XLM", "zero"]].map(([k, v]) => (
-                <div key={k}><div style={{ color: C.faint, fontSize: 15 }}>{k}</div><div style={{ color: V, fontSize: 22, fontWeight: 700, marginTop: 4 }}>{v}</div></div>
-              ))}
-            </div>
-          </div>
-        </In>
-        <In start={34}><div style={{ marginTop: 24, color: C.dim, fontSize: 21, textAlign: "center", maxWidth: 1000 }}>the STARK candidate Stellar&apos;s own Quantum Preparedness Plan names for the ZK layer it hasn&apos;t solved</div></In>
-      </AbsoluteFill>
-    </Screen>
-  );
-};
-
-const Unlink: React.FC = () => {
-  const f = useCurrentFrame();
-  const cut = interpolate(f, [30, 46], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return (
-    <Screen tint="#140f1c">
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <In><div style={{ color: C.dim, fontSize: 22, marginBottom: 40 }}>pay and prove are separated —</div></In>
-        <div style={{ display: "flex", alignItems: "center", gap: 60 }}>
-          <In start={10}><Chip label="payment #1" color={V} /></In>
-          <div style={{ position: "relative", width: 160, height: 4 }}>
-            <div style={{ position: "absolute", inset: 0, background: C.faint, opacity: 1 - cut }} />
-            <div style={{ position: "absolute", left: "50%", top: -22, transform: "translateX(-50%)", color: C.red, fontSize: 34, opacity: cut }}>✕</div>
-          </div>
-          <In start={16}><Chip label="payment #2" color={V} /></In>
-        </div>
-        <In start={50}><div style={{ marginTop: 44, color: C.green, fontSize: 26 }}>two payments by one credential cannot be linked</div></In>
-      </AbsoluteFill>
-    </Screen>
-  );
-};
-const Chip: React.FC<{ label: string; color: string }> = ({ label, color }) => (
-  <div style={{ padding: "18px 30px", borderRadius: 12, background: "#100c17", border: `1.5px solid ${color}`, color: C.ink, fontSize: 24 }}>{label}</div>
+// 1 — a premium door with a guard
+const Door: React.FC = () => (
+  <Stage a="#1c1630" b="#100b1e">
+    <Vault x={1360} y={430} scale={1.0} color={T.violet} />
+    <div style={{ position: "absolute", left: 1360, top: 300, transform: "translate(-50%,-50%)", fontSize: 44 }}>💎</div>
+    <Robot x={560} y={560} color={T.gold} face="^_^" look={1} hold={<Coin label="$" />} />
+    <Robot x={1050} y={560} color={T.teal} look={-1} z={2} />
+    <Bubble x={1050} y={430} at={10} color={T.teal} tail="down">are you allowed to buy this? 🛡️</Bubble>
+    <Caption at={6} accent={T.ink}>some things, you must be <b>allowed</b> to buy</Caption>
+  </Stage>
 );
 
-const Close: React.FC = () => {
+// 2 — mask + glowing badge: proves membership, hides identity
+const Prove: React.FC = () => {
+  const f = useCurrentFrame();
+  const glow = ease(f, 20, 40, 0, 1);
+  return (
+    <Stage a="#1c1630" b="#100b1e">
+      <Robot x={640} y={540} color={T.gold} look={1} />
+      <Pop at={12} style={{ position: "absolute", left: 640, top: 470 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 56 }}>🎭</div></Pop>
+      <Pop at={22} style={{ position: "absolute", left: 820, top: 470 }}>
+        <div style={{ transform: "translate(-50%,-50%)", fontSize: 70, filter: `drop-shadow(0 0 ${glow * 26}px ${hexA(T.violet, 0.9)})` }}>🏅</div>
+      </Pop>
+      <Robot x={1180} y={560} color={T.teal} look={-1} />
+      <Bubble x={1180} y={420} at={40} color={T.teal} tail="down">member? ✅  who? …no idea 🤷</Bubble>
+      <Caption at={44} accent={T.violet}>prove you belong to the club — <b>without showing who you are</b></Caption>
+    </Stage>
+  );
+};
+
+// 3 — the guard is a contract; vault opens
+const Open: React.FC = () => {
+  const f = useCurrentFrame();
+  const open = ease(f, 24, 60, 0, 1);
+  return (
+    <Stage a="#1c1630" b="#100b1e">
+      <Vault x={1150} y={430} scale={1.15} color={T.violet} open={open} />
+      <Fly from={[560, 560]} to={[1150, 470]} at={30} dur={30}><Coin label="$" /></Fly>
+      <Robot x={560} y={560} color={T.gold} look={1} />
+      {f > 62 && <Pop at={64} style={{ position: "absolute", left: 1150, top: 300 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 50 }}>🔓✅</div></Pop>}
+      <Caption at={6} accent={T.ink}>the guard is a <b>contract on Stellar</b> — not a nosy website keeping your name</Caption>
+    </Stage>
+  );
+};
+
+// 4 — two visits can't be linked
+const Unlink: React.FC = () => {
+  const f = useCurrentFrame();
+  const cut = ease(f, 34, 50, 0, 1);
+  return (
+    <Stage a="#1c1630" b="#100b1e">
+      <Robot x={560} y={520} color={T.gold} scale={0.9} />
+      <div style={{ position: "absolute", left: 560, top: 430, transform: "translate(-50%,-50%)", fontSize: 40 }}>🎭</div>
+      <div style={{ position: "absolute", left: 560, top: 640, color: T.dim, fontSize: 24, transform: "translateX(-50%)" }}>monday</div>
+      <Robot x={1360} y={520} color={T.gold} scale={0.9} />
+      <div style={{ position: "absolute", left: 1360, top: 430, transform: "translate(-50%,-50%)", fontSize: 40 }}>🎭</div>
+      <div style={{ position: "absolute", left: 1360, top: 640, color: T.dim, fontSize: 24, transform: "translateX(-50%)" }}>tuesday</div>
+      {/* the link, cut */}
+      <div style={{ position: "absolute", left: 700, top: 520, width: 520, height: 6, background: hexA(T.faint, 1 - cut), borderRadius: 4 }} />
+      <Pop at={36} style={{ position: "absolute", left: 960, top: 490 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 54, opacity: cut }}>✂️</div></Pop>
+      <Caption at={52} accent={T.green}>come back tomorrow — <b>nobody can link your two visits</b></Caption>
+    </Stage>
+  );
+};
+
+// 5 — quantum-proof
+const Quantum: React.FC = () => {
   const f = useCurrentFrame();
   return (
-    <Screen tint="#140f1c">
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <div style={{ opacity: interpolate(f, [0, 12], [0, 1], { extrapolateRight: "clamp" }), color: C.ink, fontSize: 54, fontWeight: 800, textAlign: "center", maxWidth: 1200 }}>pay an API · prove you may · stay anonymous</div>
-        <In start={18}><div style={{ color: C.dim, fontSize: 22, marginTop: 22 }}>self-audited · every claim carries a transaction hash · MIT</div></In>
-        <In start={32}><div style={{ color: V, fontSize: 26, marginTop: 28 }}>github.com/Galmanus/pq402</div></In>
+    <Stage a="#1c1630" b="#100b1e">
+      <Robot x={520} y={520} color={T.red} scale={1.25} face=">_<" look={1} />
+      <Bubble x={560} y={380} at={8} color={T.red} tail="left">i&apos;ll fake the badge! ⚛️</Bubble>
+      <Pop at={20} style={{ position: "absolute", left: 1150, top: 460 }}>
+        <div style={{ transform: "translate(-50%,-50%)", fontSize: 90, filter: `drop-shadow(0 0 22px ${hexA(T.violet, 0.9)})` }}>🏅</div>
+      </Pop>
+      {f > 46 && <Pop at={48} style={{ position: "absolute", left: 1150, top: 460 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 100 }}>❌</div></Pop>}
+      <Caption at={50} accent={T.violet}>even a <b>future quantum computer</b> can&apos;t fake the badge — it&apos;s hash-based</Caption>
+    </Stage>
+  );
+};
+
+const End: React.FC = () => {
+  const f = useCurrentFrame();
+  return (
+    <Stage a="#1c1630" b="#100b1e">
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <Pop><div style={{ fontSize: 88 }}>🤖🎭🏅➡️🔓</div></Pop>
+        <div style={{ marginTop: 16, color: T.ink, fontSize: 52, fontWeight: 900, textAlign: "center", opacity: ease(f, 12, 24, 0, 1) }}>pay · prove you may · stay anonymous</div>
+        <div style={{ marginTop: 14, color: T.violet, fontSize: 28, fontWeight: 700, opacity: ease(f, 26, 38, 0, 1) }}>post-quantum credentials for agent payments on Stellar</div>
+        <div style={{ marginTop: 24, color: T.dim, fontSize: 26, fontFamily: "monospace", opacity: ease(f, 40, 52, 0, 1) }}>github.com/Galmanus/pq402</div>
       </AbsoluteFill>
-    </Screen>
+    </Stage>
   );
 };
 
 export const PQ402: React.FC = () => {
-  const S = [96, 126, 138, 120, 108];
-  const XF = 10;
+  const S = [108, 120, 114, 120, 120, 114];
+  const XF = 12;
   let t = 0;
   const at = (l: number) => { const s = t; t += l - XF; return s; };
+  const scenes = [<Door />, <Prove />, <Open />, <Unlink />, <Quantum />, <End />];
   return (
     <AbsoluteFill>
-      <Sequence from={at(S[0])} durationInFrames={S[0]}><Fade dur={S[0]} xf={XF}><Open /></Fade></Sequence>
-      <Sequence from={at(S[1])} durationInFrames={S[1]}><Fade dur={S[1]} xf={XF}><Credential /></Fade></Sequence>
-      <Sequence from={at(S[2])} durationInFrames={S[2]}><Fade dur={S[2]} xf={XF}><Proof /></Fade></Sequence>
-      <Sequence from={at(S[3])} durationInFrames={S[3]}><Fade dur={S[3]} xf={XF}><Unlink /></Fade></Sequence>
-      <Sequence from={at(S[4])} durationInFrames={S[4]}><Fade dur={S[4]} xf={XF}><Close /></Fade></Sequence>
+      {scenes.map((sc, i) => (
+        <Sequence key={i} from={at(S[i])} durationInFrames={S[i]}><Fade dur={S[i]} xf={XF}>{sc}</Fade></Sequence>
+      ))}
     </AbsoluteFill>
   );
 };
-export const PQ402_LEN = 96 + 126 + 138 + 120 + 108 - 10 * 4;
+export const PQ402_LEN = 108 + 120 + 114 + 120 + 120 + 114 - 12 * 5;

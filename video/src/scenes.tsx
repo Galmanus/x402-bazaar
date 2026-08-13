@@ -1,145 +1,107 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
-import { C, MONO, Screen, In, Cursor, typed, hexA, Fade } from "./cinematic";
+import { Stage, Robot, Coin, Bubble, Stall, Caption, Fly, Pop, Fade, T, hexA } from "./toon";
 
-const ACC = C.green;
+const ease = (f: number, a: number, b: number, x: number, y: number) =>
+  interpolate(f, [a, b], [x, y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
-// 1 — cold open: an agent hits a paywall
-const Open: React.FC = () => {
+// 1 — a market of robot shops
+const Market: React.FC = () => {
   const f = useCurrentFrame();
-  const cmd = "$ agent GET https://api/weather";
-  const t = typed(cmd, f, 6, 1.8);
-  const done = t.length >= cmd.length;
+  const bx = ease(f, 10, 60, -160, 470);
   return (
-    <Screen tint="#0b1410" sweep={C.green}>
-      <AbsoluteFill style={{ justifyContent: "center", paddingLeft: 180, fontFamily: MONO }}>
-        <div style={{ fontSize: 34, color: C.ink }}><span style={{ color: C.green }}>{t}</span>{!done && <Cursor />}</div>
-        {done && (
-          <div style={{ marginTop: 28, fontSize: 26, lineHeight: 1.8 }}>
-            <In start={38}><span style={{ color: C.amber }}>← 402 Payment Required</span> <span style={{ color: C.dim }}>· 0.05 USDC</span></In>
-            <In start={54}><span style={{ color: C.dim }}>no account · no API key · sign one auth entry, retry</span></In>
-            <In start={70}><span style={{ color: C.dim }}>the buyer holds </span><span style={{ color: C.green }}>USDC only — zero XLM</span></In>
-          </div>
-        )}
-      </AbsoluteFill>
-    </Screen>
+    <Stage>
+      <Stall x={760} y={360} color={T.blue} sign="☀️" />
+      <Stall x={1000} y={360} color={T.violet} sign="💱" />
+      <Stall x={1240} y={360} color={T.green} sign="🗺️" />
+      <Robot x={bx} y={560} color={T.gold} face="^_^" look={1} hold={<Coin label="$" />} />
+      <Bubble x={bx} y={430} at={54} color={T.white} tail="down">i want the weather ☀️</Bubble>
+      <Caption at={8} accent={T.ink}>the internet is becoming a market where <b>robots</b> shop</Caption>
+    </Stage>
   );
 };
 
-// 2 — the flow, as a live pipeline
-const Flow: React.FC = () => {
+// 2 — pay, and the cashier covers the fee
+const Pay: React.FC = () => {
   const f = useCurrentFrame();
-  const steps: [string, string, number][] = [
-    ["/verify", "decode · validate auth entries · simulate", 10],
-    ["/settle", "facilitator submits · sponsors the fee", 34],
-    ["settled", "payer → recipient · non-custodial", 58],
-    ["cataloged", "the stall writes itself into the Bazaar", 82],
-  ];
   return (
-    <Screen tint="#0b1410" sweep={C.green}>
-      <AbsoluteFill style={{ padding: "80px 180px", fontFamily: MONO }}>
-        <In><div style={{ color: C.green, fontSize: 24, letterSpacing: 2, marginBottom: 8 }}>▶ ON THE FACILITATOR</div></In>
-        <In start={4}><div style={{ color: C.dim, fontSize: 20, marginBottom: 34 }}>built on @x402/stellar — verify &amp; settle NOT reimplemented</div></In>
-        {steps.map(([k, v, s], i) => {
-          const op = interpolate(f, [s, s + 8], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-          const on = f > s + 6;
-          return (
-            <div key={i} style={{ opacity: op, display: "flex", alignItems: "baseline", gap: 24, marginBottom: 18 }}>
-              <span style={{ color: C.green, fontSize: 20 }}>{on ? "●" : "○"}</span>
-              <span style={{ color: C.ink, fontSize: 30, width: 220 }}>{k}</span>
-              <span style={{ color: C.dim, fontSize: 22 }}>{v}</span>
-            </div>
-          );
-        })}
-      </AbsoluteFill>
-    </Screen>
+    <Stage>
+      <Stall x={520} y={330} color={T.blue} sign="☀️" scale={1.1} />
+      <Robot x={1050} y={540} color={T.gold} hold={<Coin label="$" />} look={-1} />
+      <Robot x={720} y={560} color={T.teal} face="^_^" look={1} z={2} />
+      <Bubble x={720} y={430} at={6} color={T.teal} tail="down">i&apos;m the cashier 🤝</Bubble>
+      <Fly from={[1010, 540]} to={[760, 560]} at={30} dur={26}><Coin label="$" /></Fly>
+      {f > 60 && <Pop at={62} style={{ position: "absolute", left: 760, top: 470 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 44 }}>✅</div></Pop>}
+      {/* the tiny toll the cashier pays itself */}
+      <Fly from={[720, 610]} to={[720, 760]} at={70} dur={22} arc={40}><div style={{ fontSize: 30 }}>🪙 fee</div></Fly>
+      <Caption at={72} accent={T.green}>you pay a coin — the cashier pays the network fee <b>for you</b></Caption>
+    </Stage>
   );
 };
 
-// 3 — the mainnet proof (the "money shot")
-const Mainnet: React.FC = () => {
+// 3 — the map writes itself
+const MapGrows: React.FC = () => {
   const f = useCurrentFrame();
-  const flash = interpolate(f, [30, 36, 50], [0, 0.4, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const glow = interpolate(f, [14, 44], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const lit = [f > 20, f > 44, f > 68];
+  const count = lit.filter(Boolean).length;
   return (
-    <Screen tint="#0b1410">
-      <AbsoluteFill style={{ background: `rgba(63,185,80,${flash})` }} />
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <In><div style={{ color: C.green, fontSize: 26, letterSpacing: 3, fontWeight: 800 }}>⛓ LIVE ON STELLAR MAINNET</div></In>
-        <In start={14}>
-          <div style={{ marginTop: 26, padding: "30px 44px", borderRadius: 16, background: "#0c110e", border: `1.5px solid ${C.green}`, boxShadow: `0 0 ${glow * 55}px ${hexA(C.green, 0.3 * glow)}` }}>
-            <div style={{ color: C.dim, fontSize: 18, marginBottom: 12 }}>real USDC settlement · stellar:pubnet</div>
-            <div style={{ color: C.ink, fontSize: 30 }}>07ecff0b<span style={{ color: C.faint }}>17403d4500e230f7f3d23cea347a495f</span></div>
-            <div style={{ display: "flex", gap: 44, marginTop: 20 }}>
-              {[["ledger", "63 918 501"], ["fee paid by", "facilitator"], ["payer spent", "USDC only"]].map(([k, v]) => (
-                <div key={k}><div style={{ color: C.faint, fontSize: 15 }}>{k}</div><div style={{ color: C.green, fontSize: 22, fontWeight: 700, marginTop: 4 }}>{v}</div></div>
-              ))}
-            </div>
-          </div>
-        </In>
-        <In start={34}><div style={{ marginTop: 24, color: C.dim, fontSize: 22 }}>testnet <b style={{ color: C.ink }}>and</b> mainnet — both committed deliverables, live &amp; checkable</div></In>
-      </AbsoluteFill>
-    </Screen>
+    <Stage>
+      <div style={{ position: "absolute", top: 90, width: "100%", textAlign: "center", color: T.dim, fontSize: 30, fontWeight: 700 }}>the Bazaar map</div>
+      <Stall x={640} y={360} color={T.blue} sign="☀️" on={lit[0]} />
+      <Stall x={960} y={360} color={T.violet} sign="💱" on={lit[1]} />
+      <Stall x={1280} y={360} color={T.green} sign="🗺️" on={lit[2]} />
+      {lit.map((on, i) => on && <Pop key={i} at={20 + i * 24} style={{ position: "absolute", left: 640 + i * 320, top: 250 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 40 }}>✨</div></Pop>)}
+      <div style={{ position: "absolute", left: "50%", top: 560, transform: "translateX(-50%)", color: T.gold, fontSize: 34, fontWeight: 800 }}>shops on the map: {count}</div>
+      <Caption at={6} accent={T.ink}>every time a robot buys, that shop lights up on the map — <b>by itself</b></Caption>
+    </Stage>
   );
 };
 
-// 4 — natural-language search
-const Search: React.FC = () => {
+// 4 — another robot just asks
+const Find: React.FC = () => {
   const f = useCurrentFrame();
-  const q = "what's the weather in my city";
-  const t = typed(q, f, 8, 1.3);
+  const beam = f > 40;
   return (
-    <Screen tint="#0b1014" sweep={C.blue}>
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <In><div style={{ color: C.dim, fontSize: 22, marginBottom: 16 }}>GET /discovery/search — natural language, ranked</div></In>
-        <In start={4}>
-          <div style={{ width: 900, padding: "18px 24px", borderRadius: 12, background: "#0c1016", border: `1.5px solid ${C.blue}`, color: C.ink, fontSize: 26 }}>
-            <span style={{ color: C.blue }}>?</span> {t}<Cursor color={C.blue} />
-          </div>
-        </In>
-        <In start={54}>
-          <div style={{ width: 900, marginTop: 20, padding: "20px 24px", borderRadius: 12, background: "#0c1016", border: `1.5px solid #1b2027` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ color: C.ink, fontSize: 26, fontWeight: 700 }}>BazaarWeather</span>
-              <span style={{ color: C.green, fontSize: 20 }}>nDCG@10 0.833</span>
-            </div>
-            <div style={{ color: C.dim, fontSize: 19, marginTop: 6 }}>current weather &amp; temperature · 0.01 USDC</div>
-            <div style={{ color: C.faint, fontSize: 16, marginTop: 10 }}>provenance · distinct payers · distinct credential holders — sybil-resistant</div>
-          </div>
-        </In>
-        <In start={78}><div style={{ marginTop: 20, color: C.dim, fontSize: 20 }}>hybrid BM25 + local embedding · measured, not asserted</div></In>
-      </AbsoluteFill>
-    </Screen>
+    <Stage>
+      <Robot x={330} y={540} color={T.pink} face="?" look={1} />
+      <Bubble x={430} y={410} at={8} color={T.white} tail="left">who sells weather? 🤔</Bubble>
+      <Stall x={760} y={360} color={T.blue} sign="☀️" on={beam} />
+      <Stall x={1010} y={360} color={T.violet} sign="💱" on={false} />
+      <Stall x={1260} y={360} color={T.green} sign="🗺️" on={false} />
+      {beam && <Pop at={42} style={{ position: "absolute", left: 760, top: 250 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 46 }}>👉☀️</div></Pop>}
+      <Caption at={44} accent={T.blue}>ask in plain words — the Bazaar points you to the right shop</Caption>
+    </Stage>
   );
 };
 
-// 5 — close
-const Close: React.FC = () => {
+// 5 — impact / real
+const Real: React.FC = () => {
   const f = useCurrentFrame();
   return (
-    <Screen tint="#0b1410">
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontFamily: MONO }}>
-        <div style={{ opacity: interpolate(f, [0, 12], [0, 1], { extrapolateRight: "clamp" }), color: C.ink, fontSize: 60, fontWeight: 800 }}>the first Bazaar for Stellar</div>
-        <In start={16}><div style={{ color: C.dim, fontSize: 23, marginTop: 22 }}>6 settlements on-chain · Bazaar · upto scheme · Apache-2.0, no AGPL</div></In>
-        <In start={32}><div style={{ color: C.green, fontSize: 26, marginTop: 28 }}>github.com/Galmanus/x402-bazaar</div></In>
+    <Stage a="#12261c" b="#0b1712">
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <Pop><div style={{ fontSize: 90 }}>🤖🪙➡️🏪</div></Pop>
+        <div style={{ marginTop: 16, color: T.ink, fontSize: 58, fontWeight: 900, opacity: ease(f, 12, 24, 0, 1) }}>the first Bazaar for Stellar</div>
+        <div style={{ marginTop: 14, color: T.green, fontSize: 30, fontWeight: 700, opacity: ease(f, 26, 38, 0, 1) }}>and it&apos;s live on <b>mainnet</b> — real money, real robots</div>
+        <div style={{ marginTop: 26, color: T.dim, fontSize: 26, fontFamily: "monospace", opacity: ease(f, 40, 52, 0, 1) }}>github.com/Galmanus/x402-bazaar</div>
       </AbsoluteFill>
-    </Screen>
+    </Stage>
   );
 };
 
 export const Main: React.FC = () => {
-  const S = [96, 126, 138, 126, 108];
-  const XF = 10;
+  const S = [120, 132, 114, 108, 114];
+  const XF = 12;
   let t = 0;
   const at = (l: number) => { const s = t; t += l - XF; return s; };
   return (
     <AbsoluteFill>
-      <Sequence from={at(S[0])} durationInFrames={S[0]}><Fade dur={S[0]} xf={XF}><Open /></Fade></Sequence>
-      <Sequence from={at(S[1])} durationInFrames={S[1]}><Fade dur={S[1]} xf={XF}><Flow /></Fade></Sequence>
-      <Sequence from={at(S[2])} durationInFrames={S[2]}><Fade dur={S[2]} xf={XF}><Mainnet /></Fade></Sequence>
-      <Sequence from={at(S[3])} durationInFrames={S[3]}><Fade dur={S[3]} xf={XF}><Search /></Fade></Sequence>
-      <Sequence from={at(S[4])} durationInFrames={S[4]}><Fade dur={S[4]} xf={XF}><Close /></Fade></Sequence>
+      <Sequence from={at(S[0])} durationInFrames={S[0]}><Fade dur={S[0]} xf={XF}><Market /></Fade></Sequence>
+      <Sequence from={at(S[1])} durationInFrames={S[1]}><Fade dur={S[1]} xf={XF}><Pay /></Fade></Sequence>
+      <Sequence from={at(S[2])} durationInFrames={S[2]}><Fade dur={S[2]} xf={XF}><MapGrows /></Fade></Sequence>
+      <Sequence from={at(S[3])} durationInFrames={S[3]}><Fade dur={S[3]} xf={XF}><Find /></Fade></Sequence>
+      <Sequence from={at(S[4])} durationInFrames={S[4]}><Fade dur={S[4]} xf={XF}><Real /></Fade></Sequence>
     </AbsoluteFill>
   );
 };
-export const MAIN_LEN = 96 + 126 + 138 + 126 + 108 - 10 * 4;
+export const MAIN_LEN = 120 + 132 + 114 + 108 + 114 - 12 * 4;
