@@ -11,6 +11,10 @@
 
 **The marketplace layer for the agent economy on Stellar. Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.**
 
+https://github.com/user-attachments/assets/x402-bazaar.mp4
+
+<sub>▶️ 22-second explainer ([assets/x402-bazaar.mp4](assets/x402-bazaar.mp4)) — payment flow, the real mainnet settlement, and natural-language search. Source: [`video/`](video/).</sub>
+
 > **⛓️ Live on Stellar MAINNET.** A real USDC payment settled on `stellar:pubnet`
 > through this facilitator — tx
 > [`07ecff0b`](https://stellar.expert/explorer/public/tx/07ecff0b17403d4500e230f7f3d23cea347a495f1d3e0a193bb0cc2b0e275dbb),

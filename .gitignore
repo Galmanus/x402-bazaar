@@ -9,3 +9,5 @@ scripts/.keys-pubnet.json
 bazaar-pubnet.db
 bazaar-upto.db
 bazaar-pubnet.db
+video/node_modules
+video/out
