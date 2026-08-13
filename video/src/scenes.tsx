@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
-import { Stage, Robot, Coin, Bubble, Stall, Caption, Fly, Pop, Fade, T, hexA } from "./toon";
+import { Stage, Robot, Coin, Bubble, Stall, Caption, Fly, Pop, Fade, Badge, T, hexA } from "./toon";
 
 const ease = (f: number, a: number, b: number, x: number, y: number) =>
   interpolate(f, [a, b], [x, y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -74,6 +74,23 @@ const Find: React.FC = () => {
   );
 };
 
+// 4.5 — post-quantum anonymous badge (the differentiator)
+const Quantum: React.FC = () => {
+  const f = useCurrentFrame();
+  const glow = ease(f, 14, 34, 0, 1);
+  return (
+    <Stage a="#161a2e" b="#0d0f1c">
+      <Robot x={560} y={540} color={T.gold} look={1} />
+      <Pop at={6} style={{ position: "absolute", left: 560, top: 460 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 44 }}>🎭</div></Pop>
+      <Pop at={16} style={{ position: "absolute", left: 770, top: 470 }}><div style={{ transform: "translate(-50%,-50%)" }}><Badge size={110} color={T.violet} glow={glow} /></div></Pop>
+      <Robot x={1230} y={540} color={T.red} scale={1.15} face=">_<" look={-1} />
+      <Bubble x={1230} y={400} at={38} color={T.red} tail="down">i&apos;ll fake it! ⚛️</Bubble>
+      {f > 60 && <Pop at={62} style={{ position: "absolute", left: 1050, top: 470 }}><div style={{ transform: "translate(-50%,-50%)", fontSize: 72 }}>❌</div></Pop>}
+      <Caption at={44} accent={T.violet}>shop <b>anonymously</b>, with a <b>post-quantum</b> badge no quantum computer can fake</Caption>
+    </Stage>
+  );
+};
+
 // 5 — impact / real
 const Real: React.FC = () => {
   const f = useCurrentFrame();
@@ -90,18 +107,17 @@ const Real: React.FC = () => {
 };
 
 export const Main: React.FC = () => {
-  const S = [120, 132, 114, 108, 114];
+  const S = [120, 132, 114, 108, 126, 120];
   const XF = 12;
   let t = 0;
   const at = (l: number) => { const s = t; t += l - XF; return s; };
+  const scenes = [<Market />, <Pay />, <MapGrows />, <Find />, <Quantum />, <Real />];
   return (
     <AbsoluteFill>
-      <Sequence from={at(S[0])} durationInFrames={S[0]}><Fade dur={S[0]} xf={XF}><Market /></Fade></Sequence>
-      <Sequence from={at(S[1])} durationInFrames={S[1]}><Fade dur={S[1]} xf={XF}><Pay /></Fade></Sequence>
-      <Sequence from={at(S[2])} durationInFrames={S[2]}><Fade dur={S[2]} xf={XF}><MapGrows /></Fade></Sequence>
-      <Sequence from={at(S[3])} durationInFrames={S[3]}><Fade dur={S[3]} xf={XF}><Find /></Fade></Sequence>
-      <Sequence from={at(S[4])} durationInFrames={S[4]}><Fade dur={S[4]} xf={XF}><Real /></Fade></Sequence>
+      {scenes.map((sc, i) => (
+        <Sequence key={i} from={at(S[i])} durationInFrames={S[i]}><Fade dur={S[i]} xf={XF}>{sc}</Fade></Sequence>
+      ))}
     </AbsoluteFill>
   );
 };
-export const MAIN_LEN = 120 + 132 + 114 + 108 + 114 - 12 * 4;
+export const MAIN_LEN = 120 + 132 + 114 + 108 + 126 + 120 - 12 * 5;

@@ -150,6 +150,65 @@ export const Pop: React.FC<{ at?: number; children: React.ReactNode; style?: Rea
   return <div style={{ transform: `scale(${s})`, ...style }}>{children}</div>;
 };
 
+/** A drawn medal/badge (not an emoji). Pulses a glow. */
+export const Badge: React.FC<{ size?: number; color?: string; glow?: number; check?: boolean }> = ({ size = 90, color = T.violet, glow = 1, check = true }) => {
+  const f = useCurrentFrame();
+  const pulse = 0.7 + 0.3 * Math.abs(Math.sin(f / 12));
+  return (
+    <div style={{ position: "relative", width: size, height: size, filter: `drop-shadow(0 0 ${glow * 24 * pulse}px ${hexA(color, 0.9)})` }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: 99, background: `radial-gradient(circle at 40% 32%, ${hexA("#fff", 0.5)}, ${color})`, border: `4px solid ${hexA("#000", 0.15)}` }} />
+      {/* ribs */}
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} style={{ position: "absolute", left: "50%", top: "50%", width: 4, height: size * 0.52, background: hexA("#000", 0.08), transformOrigin: "top center", transform: `translate(-50%,0) rotate(${i * 30}deg)` }} />
+      ))}
+      <div style={{ position: "absolute", inset: size * 0.22, borderRadius: 99, background: hexA("#101722", 0.9), display: "flex", alignItems: "center", justifyContent: "center", color, fontSize: size * 0.34, fontWeight: 900 }}>{check ? "✓" : "★"}</div>
+    </div>
+  );
+};
+
+/** A drawn wax seal — a ring with an emblem. `broken` cracks it. */
+export const Seal: React.FC<{ size?: number; color?: string; glow?: number; broken?: number }> = ({ size = 120, color = T.violet, glow = 1, broken = 0 }) => {
+  const f = useCurrentFrame();
+  const pulse = 0.7 + 0.3 * Math.abs(Math.sin(f / 14));
+  return (
+    <div style={{ position: "relative", width: size, height: size, filter: `drop-shadow(0 0 ${glow * 26 * pulse}px ${hexA(color, 0.9)})` }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: 99, background: `radial-gradient(circle at 38% 30%, ${hexA("#fff", 0.4)}, ${color})`, transform: `rotate(${broken * 6}deg)`, clipPath: broken > 0.5 ? "polygon(0 0, 100% 0, 100% 45%, 60% 55%, 100% 60%, 100% 100%, 0 100%)" : "none" }} />
+      <div style={{ position: "absolute", inset: size * 0.18, borderRadius: 99, border: `${size * 0.05}px dashed ${hexA("#000", 0.25)}` }} />
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.4, color: hexA("#000", 0.4), fontWeight: 900 }}>✦</div>
+      {broken > 0.5 && <div style={{ position: "absolute", left: "52%", top: 0, width: 4, height: "100%", background: "#0f0b1c" }} />}
+    </div>
+  );
+};
+
+/** A drawn stack of pages (durable index). */
+export const Pages: React.FC<{ n?: number; at?: number; color?: string }> = ({ n = 15, at = 0, color = T.violet }) => {
+  const f = useCurrentFrame();
+  return (
+    <div style={{ position: "relative", width: 240, height: 200 }}>
+      {Array.from({ length: n }).map((_, i) => {
+        const s = spring({ frame: f - (at + i * 4), fps: 30, config: { damping: 12 }, durationInFrames: 16 });
+        const col = i % 5, row = Math.floor(i / 5);
+        return <div key={i} style={{ position: "absolute", left: col * 46, top: row * 60, width: 40, height: 52, borderRadius: 6, background: hexA("#fff", 0.9), borderLeft: `5px solid ${color}`, transform: `scale(${s})`, boxShadow: "0 4px 10px rgba(0,0,0,0.3)" }} />;
+      })}
+    </div>
+  );
+};
+
+/** A spark burst at a point. */
+export const Burst: React.FC<{ at: number; color?: string }> = ({ at, color = T.gold }) => {
+  const f = useCurrentFrame();
+  const p = interpolate(f, [at, at + 16], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  if (p <= 0 || p >= 1) return null;
+  return (
+    <div style={{ position: "absolute", left: 0, top: 0 }}>
+      {Array.from({ length: 10 }).map((_, i) => {
+        const a = (i / 10) * Math.PI * 2;
+        return <div key={i} style={{ position: "absolute", left: Math.cos(a) * p * 70, top: Math.sin(a) * p * 70, width: 10, height: 10, borderRadius: 99, background: color, opacity: 1 - p }} />;
+      })}
+    </div>
+  );
+};
+
 export const Fade: React.FC<{ dur: number; xf: number; children: React.ReactNode }> = ({ dur, xf, children }) => {
   const f = useCurrentFrame();
   const op = interpolate(f, [0, xf, dur - xf, dur], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
