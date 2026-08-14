@@ -38,13 +38,24 @@ function provOf(item: Item): Provenance {
 }
 
 /* ---------- card ---------- */
-function Card({ item }: { item: Item }) {
+function Card({ item, onOpen }: { item: Item; onOpen?: (it: Item) => void }) {
   const a = (item.accepts && item.accepts[0]) || {};
   const prov = provOf(item);
   const net = a.network || "";
   const tx = prov.lastSettleTx;
   return (
-    <div className="card">
+    <div
+      className="card card--click"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen && onOpen(item)}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && onOpen) {
+          e.preventDefault();
+          onOpen(item);
+        }
+      }}
+    >
       <div className="card__top">
         <div className="card__name">{item.serviceName || item.resource}</div>
         <div className="card__price">{priceOf(a)}</div>
@@ -68,11 +79,156 @@ function Card({ item }: { item: Item }) {
         {tx ? (
           <span>
             last tx{" "}
-            <a href={explorer(net, tx)} target="_blank" rel="noreferrer">
+            <a href={explorer(net, tx)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
               {tx.slice(0, 8)}…
             </a>
           </span>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- service detail modal ---------- */
+function buyerSnippet(item: Item): string {
+  const a = (item.accepts && item.accepts[0]) || {};
+  const net = a.network || "stellar:testnet";
+  const rpc = net.includes("pubnet") ? `, { url: process.env.RPC_URL! } // pubnet has no default RPC` : "";
+  return `import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
+import { createEd25519Signer } from "@x402/stellar";
+import { ExactStellarScheme } from "@x402/stellar/exact/client";
+
+// the agent holds USDC only — network fees are sponsored
+const signer = createEd25519Signer(process.env.STELLAR_SECRET_KEY!, "${net}");
+const payFetch = wrapFetchWithPaymentFromConfig(fetch, {
+  schemes: [{ network: "${net}", client: new ExactStellarScheme(signer${rpc}) }],
+});
+
+const res = await payFetch("${item.resource}");
+console.log(await res.json()); // paid + settled in the same request`;
+}
+
+function Detail({ item, onClose }: { item: Item; onClose: () => void }) {
+  const prov = provOf(item);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+  const snippet = buyerSnippet(item);
+  const copy = () => {
+    navigator.clipboard?.writeText(snippet).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    });
+  };
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-label={item.serviceName || item.resource} onClick={onClose}>
+      <div className="modal__panel" onClick={(e) => e.stopPropagation()}>
+        <button className="modal__close" onClick={onClose} aria-label="Close">
+          ×
+        </button>
+        <div className="kicker">service</div>
+        <h3 className="modal__name">{item.serviceName || item.resource}</h3>
+        <p className="modal__desc">{item.description}</p>
+        <div className="card__tags">
+          {(item.tags || []).map((t) => (
+            <span className="tag" key={t}>
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <div className="kicker modal__k">payment terms</div>
+        {(item.accepts || []).map((a, i) => (
+          <div className="kv" key={i}>
+            <div>
+              <span>scheme</span>
+              <b>{a.scheme}</b>
+            </div>
+            <div>
+              <span>network</span>
+              <b>{a.network}</b>
+            </div>
+            <div>
+              <span>price</span>
+              <b>{priceOf(a)}</b>
+            </div>
+            <div>
+              <span>asset</span>
+              <b className="mono" title={a.asset}>
+                {(a.asset || "").slice(0, 6)}…{(a.asset || "").slice(-4)}
+              </b>
+            </div>
+            <div>
+              <span>pay to</span>
+              <b className="mono" title={a.payTo}>
+                {(a.payTo || "").slice(0, 6)}…{(a.payTo || "").slice(-4)}
+              </b>
+            </div>
+            <div>
+              <span>fees</span>
+              <b>sponsored</b>
+            </div>
+          </div>
+        ))}
+
+        <div className="kicker modal__k">provenance — written by settlements</div>
+        <div className="kv">
+          <div>
+            <span>settlements</span>
+            <b>{prov.settleCount ?? 0}</b>
+          </div>
+          <div>
+            <span>distinct payers</span>
+            <b>{prov.distinctPayers ?? 0}</b>
+          </div>
+          {prov.firstSettleTx ? (
+            <div>
+              <span>first tx</span>
+              <b>
+                <a
+                  href={explorer((item.accepts && item.accepts[0] && item.accepts[0].network) || "", prov.firstSettleTx)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {prov.firstSettleTx.slice(0, 8)}…
+                </a>
+              </b>
+            </div>
+          ) : null}
+          {prov.lastSettleTx && prov.lastSettleTx !== prov.firstSettleTx ? (
+            <div>
+              <span>last tx</span>
+              <b>
+                <a
+                  href={explorer((item.accepts && item.accepts[0] && item.accepts[0].network) || "", prov.lastSettleTx)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {prov.lastSettleTx.slice(0, 8)}…
+                </a>
+              </b>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="kicker modal__k">pay for it from your agent</div>
+        <div className="codewrap">
+          <button className="codecopy" onClick={copy}>
+            {copied ? "copied" : "copy"}
+          </button>
+          <pre className="code">
+            <code>{snippet}</code>
+          </pre>
+        </div>
       </div>
     </div>
   );
@@ -157,6 +313,8 @@ export default function Home() {
   const [results, setResults] = useState<Item[] | null>(null);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
+  const [netFilter, setNetFilter] = useState<"all" | "stellar:pubnet" | "stellar:testnet">("all");
+  const [selected, setSelected] = useState<Item | null>(null);
 
   // enable scroll-reveal only once JS is present (no-JS => content visible)
   useEffect(() => {
@@ -258,6 +416,7 @@ export default function Home() {
           <div className="navlinks">
             <a href="#search">Search</a>
             <a href="#pq">Post-quantum</a>
+            <a href="#list">Sell</a>
             <a href="#how">How it works</a>
             <a href="https://github.com/Galmanus/x402-bazaar" target="_blank" rel="noreferrer">
               Source
@@ -378,7 +537,7 @@ export default function Home() {
                 {loading ? (
                   <div className="empty">searching…</div>
                 ) : results.length ? (
-                  results.map((it) => <Card item={it} key={it.resource} />)
+                  results.map((it) => <Card item={it} key={it.resource} onOpen={setSelected} />)
                 ) : (
                   <div className="empty">nothing matched “{q}”.</div>
                 )}
@@ -392,11 +551,38 @@ export default function Home() {
             <h2 className="sh">Written by settlements, not by us</h2>
             <p className="sdesc">
               Every entry appeared because an agent actually paid for it. Each provenance link opens the real transaction
-              on stellar.expert.
+              on stellar.expert. Click a card for payment terms and a ready-to-run client.
             </p>
+            <div className="filters" role="group" aria-label="Filter catalog by network">
+              {(
+                [
+                  ["all", "all networks"],
+                  ["stellar:pubnet", "mainnet"],
+                  ["stellar:testnet", "testnet"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  className={"fbtn" + (netFilter === v ? " fbtn--on" : "")}
+                  onClick={() => setNetFilter(v)}
+                  aria-pressed={netFilter === v}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="grid">
               {catalog.length ? (
-                catalog.map((it) => <Card item={it} key={it.resource} />)
+                (() => {
+                  const shown = catalog.filter(
+                    (it) => netFilter === "all" || ((it.accepts && it.accepts[0] && it.accepts[0].network) || "") === netFilter,
+                  );
+                  return shown.length ? (
+                    shown.map((it) => <Card item={it} key={it.resource} onOpen={setSelected} />)
+                  ) : (
+                    <div className="empty">no services on this network yet.</div>
+                  );
+                })()
               ) : (
                 <div className="empty">loading…</div>
               )}
@@ -429,6 +615,49 @@ export default function Home() {
         </section>
 
         <div className="wrap">
+          {/* LIST YOUR SERVICE */}
+          <section className="section reveal" id="list">
+            <div className="kicker">Sell</div>
+            <h2 className="sh">List your service — no form, no gatekeeper</h2>
+            <p className="sdesc">
+              There is no “submit your API” form. Wrap your endpoint with the standard <b>@x402/express</b> middleware,
+              point it at the facilitator, and the moment the first agent pays, the Bazaar catalogs it automatically —
+              with on-chain provenance from day one.
+            </p>
+            <div className="codewrap">
+              <pre className="code">
+                <code>{`import { paymentMiddleware, x402ResourceServer } from "@x402/express";
+import { HTTPFacilitatorClient } from "@x402/core/server";
+import { ExactStellarScheme } from "@x402/stellar/exact/server";
+import { bazaarResourceServerExtension } from "@x402/extensions/bazaar";
+
+const server = new x402ResourceServer(new HTTPFacilitatorClient({ url: FACILITATOR_URL }))
+  .register("stellar:testnet", new ExactStellarScheme())
+  .registerExtension(bazaarResourceServerExtension);
+
+app.use(paymentMiddleware({
+  "GET /weather": {
+    accepts: {
+      scheme: "exact",
+      price: "$0.05",            // or any SEP-41 token: { amount, asset }
+      network: "stellar:testnet",
+      payTo: YOUR_STELLAR_ADDRESS,
+      maxTimeoutSeconds: 45,
+    },
+  },
+}, server));
+// first settled payment ⇒ your service appears in the catalog, with provenance`}</code>
+              </pre>
+            </div>
+            <p className="sdesc sdesc--after">
+              Nothing here is specific to this facilitator — any unmodified x402 seller works. Full runnable example in{" "}
+              <a href="https://github.com/Galmanus/x402-bazaar/tree/main/examples/weather" target="_blank" rel="noreferrer">
+                examples/weather
+              </a>
+              .
+            </p>
+          </section>
+
           {/* HOW IT WORKS */}
           <section className="section reveal" id="how">
             <div className="kicker">How it works</div>
@@ -478,6 +707,8 @@ export default function Home() {
           </div>
         </footer>
       </div>
+
+      {selected ? <Detail item={selected} onClose={() => setSelected(null)} /> : null}
     </>
   );
 }
