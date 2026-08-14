@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import Constellation, { type SkyNode } from "./Constellation";
 
 /* ---------- types ---------- */
 type Provenance = {
@@ -45,10 +44,7 @@ function Card({ item }: { item: Item }) {
   const net = a.network || "";
   const tx = prov.lastSettleTx;
   return (
-    <div
-      className="card"
-      onMouseEnter={() => window.dispatchEvent(new CustomEvent("bazaar:hover", { detail: item.resource }))}
-    >
+    <div className="card">
       <div className="card__top">
         <div className="card__name">{item.serviceName || item.resource}</div>
         <div className="card__price">{priceOf(a)}</div>
@@ -237,12 +233,6 @@ export default function Home() {
       });
   }, []);
 
-  // signature nodes — resources.map (never a hardcoded count)
-  const skyNodes: SkyNode[] = catalog.map((r) => ({
-    id: r.resource,
-    settleCount: provOf(r).settleCount ?? 1,
-  }));
-
   // HONEST stat: settlements = sum of real settleCount (== what the chain backs).
   // data.ts sums to 5; computed live so the numeral never outruns the catalog.
   const settlementCount = catalog.reduce((acc, it) => acc + (provOf(it).settleCount ?? 0), 0);
@@ -257,7 +247,7 @@ export default function Home() {
 
   return (
     <>
-      {skyNodes.length > 0 && <Constellation nodes={skyNodes} />}
+      <div className="ambient" aria-hidden="true" />
 
       <div className="shell">
         {/* NAV */}
@@ -279,24 +269,22 @@ export default function Home() {
         <header className="hero">
           <div className="eyebrow">
             <span className="live-dot" aria-hidden="true" />
-            live · watched in real time
+            live · x402 discovery on stellar
           </div>
           <h1>
             <span className="ln">
-              <span>The marketplace layer</span>
+              <span>The marketplace</span>
             </span>
             <span className="ln">
               <span>
-                for the <em className="accent">agent economy</em>
+                <em className="accent">agents can read.</em>
               </span>
-            </span>
-            <span className="ln">
-              <span>on Stellar.</span>
             </span>
           </h1>
           <p className="lead">
-            Agents find a service, pay in USDC over x402, and the catalog writes itself — one settled payment at a time.
-            A self-hostable facilitator plus a native discovery Bazaar, built on the Apache-2.0 @x402/stellar package.
+            An agent finds a service and pays in USDC inside the same request. Every settlement writes the next
+            entry in the catalog — provable, self-hostable, and yours to run. A native x402 discovery Bazaar,
+            built on Stellar.
           </p>
           <div className="cta-row">
             <a className="btn btn--primary" href="#search">
