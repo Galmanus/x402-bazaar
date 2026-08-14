@@ -89,6 +89,27 @@ function Card({ item, onOpen }: { item: Item; onOpen?: (it: Item) => void }) {
   );
 }
 
+/* ---------- copyable snippet ---------- */
+function Snippet({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard?.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    });
+  };
+  return (
+    <div className="codewrap">
+      <button className="codecopy" onClick={copy}>
+        {copied ? "copied" : "copy"}
+      </button>
+      <pre className="code">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
 /* ---------- service detail modal ---------- */
 function buyerSnippet(item: Item): string {
   const a = (item.accepts && item.accepts[0]) || {};
@@ -416,6 +437,7 @@ export default function Home() {
           <div className="navlinks">
             <a href="#search">Search</a>
             <a href="#pq">Post-quantum</a>
+            <a href="#mcp">Agents</a>
             <a href="#list">Sell</a>
             <a href="#how">How it works</a>
             <a href="https://github.com/Galmanus/x402-bazaar" target="_blank" rel="noreferrer">
@@ -655,6 +677,58 @@ app.use(paymentMiddleware({
                 examples/weather
               </a>
               .
+            </p>
+          </section>
+
+          {/* CONNECT YOUR AGENT (MCP) */}
+          <section className="section reveal" id="mcp">
+            <div className="kicker">Agents</div>
+            <h2 className="sh">Plug the Bazaar into your agent — one URL</h2>
+            <p className="sdesc">
+              The Bazaar is a hosted <b>remote MCP server</b>. Claude Code, Cursor, or any MCP client gets{" "}
+              <b>search_services</b>, <b>list_services</b> and <b>get_service</b> with a single line — nothing to
+              install, nothing to run.
+            </p>
+            <div className="mcpgrid">
+              <div>
+                <div className="kicker modal__k">claude code</div>
+                <Snippet code={`claude mcp add --transport http x402-bazaar \\
+  https://x402-bazaar-web-u87t.vercel.app/api/mcp`} />
+              </div>
+              <div>
+                <div className="kicker modal__k">cursor · any streamable-http client</div>
+                <Snippet code={`{
+  "mcpServers": {
+    "x402-bazaar": {
+      "url": "https://x402-bazaar-web-u87t.vercel.app/api/mcp"
+    }
+  }
+}`} />
+              </div>
+              <div>
+                <div className="kicker modal__k">stdio-only clients (claude desktop)</div>
+                <Snippet code={`{
+  "mcpServers": {
+    "x402-bazaar": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote",
+        "https://x402-bazaar-web-u87t.vercel.app/api/mcp"]
+    }
+  }
+}`} />
+              </div>
+            </div>
+            <p className="sdesc sdesc--after">
+              Honest scope: the remote server is <b>read-only discovery</b>. <b>paid_call</b> — the tool that actually
+              pays — signs with your key, so it stays in the{" "}
+              <a
+                href="https://github.com/Galmanus/x402-bazaar/tree/main/packages/mcp-discovery"
+                target="_blank"
+                rel="noreferrer"
+              >
+                local stdio server
+              </a>
+              : your private key never touches a shared endpoint.
             </p>
           </section>
 

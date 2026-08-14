@@ -1,0 +1,10 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+const t = new StdioClientTransport({ command: "npx", args: ["tsx", "packages/mcp-discovery/src/server.ts"], env: { ...process.env as Record<string,string>, FACILITATOR_URL: "https://x402-bazaar-web-u87t.vercel.app/api" } });
+const c = new Client({ name: "smoke", version: "0.0.0" });
+await c.connect(t);
+const tools = await c.listTools();
+console.log("tools:", tools.tools.map(x => x.name).join(", "));
+const r: any = await c.callTool({ name: "search_services", arguments: { query: "weather on mainnet" } });
+console.log(r.content[0].text.slice(0, 500));
+await c.close();

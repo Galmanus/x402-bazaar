@@ -38,6 +38,14 @@ The Stellar x402 stack can settle payments but has **no way to discover them**. 
 
 **▶ Live demo:** **[x402-bazaar-web-u87t.vercel.app](https://x402-bazaar-web-u87t.vercel.app/)** — browse the catalog, search in plain language, every entry links to its real on-chain settlement.
 
+**▶ Plug it into your agent (remote MCP, one line):**
+
+```sh
+claude mcp add --transport http x402-bazaar https://x402-bazaar-web-u87t.vercel.app/api/mcp
+```
+
+Any streamable-HTTP MCP client works with the same URL (`{"mcpServers":{"x402-bazaar":{"url":"https://x402-bazaar-web-u87t.vercel.app/api/mcp"}}}`); stdio-only clients go through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote). The remote server exposes `search_services` / `list_services` / `get_service` and is **read-only by design** — `paid_call`, which signs with your key, lives in the local stdio server (`packages/mcp-discovery`) so your private key never touches a shared endpoint.
+
 Or run it locally in 30 seconds:
 
 ```sh
