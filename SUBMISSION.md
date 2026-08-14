@@ -2,6 +2,7 @@
 
 RFP: **X402 Facilitator with Bazaar (discovery) support**
 Repo: https://github.com/Galmanus/x402-bazaar (Apache-2.0)
+Live demo: https://x402-bazaar-web-u87t.vercel.app/
 Submit at: https://communityfund.stellar.org — Interest form first (deadline **Aug 16, 2026**),
 Build form after the email invite.
 

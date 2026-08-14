@@ -36,7 +36,9 @@ The Stellar x402 stack can settle payments but has **no way to discover them**. 
 
 ## Try it yourself
 
-**▶ Live demo:** _(hosting in progress — run it locally in 30 seconds:)_
+**▶ Live demo:** **[x402-bazaar-web-u87t.vercel.app](https://x402-bazaar-web-u87t.vercel.app/)** — browse the catalog, search in plain language, every entry links to its real on-chain settlement.
+
+Or run it locally in 30 seconds:
 
 ```sh
 npm install
