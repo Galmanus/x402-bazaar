@@ -69,7 +69,7 @@ The demo is seeded with the actual services our conformance runs settled on-chai
 
 The credential is a **hash-based Circle-STARK**: no elliptic curves, no pairings, no trusted setup — **nothing Shor's algorithm can break**. Every other privacy/identity proof on Stellar today is BN254, which a quantum computer forges; this one it cannot.
 
-- **The verifier is live on Stellar mainnet** in the companion repo [pq402](https://github.com/Galmanus/pq402) — a working instance of the STARK candidate Stellar's own Quantum Preparedness Plan names for the ZK layer it hasn't solved.
+- **The verifier is live on Stellar mainnet** (verifiable on-chain) — a working instance of the STARK candidate Stellar's own Quantum Preparedness Plan names for the ZK layer it hasn't solved. Its source (`pq402`) is maintained in a **private repository as protected IP** — this facilitator + Bazaar stand alone without it; access to the credential engine on request.
 - **x402-bazaar ships the integration** — `packages/bazaar/src/credential.ts` (`CredentialVerifier`, `distinctCredentialHolders`); wiring the production pq402 verifier in is scheduled work.
 
 > **Honest scope, because reviewers check:** the USDC *settlement* uses standard Soroban signatures (a Stellar-protocol concern the SDF's own QPP addresses). The post-quantum, anonymous part is the **agent-credential and provenance layer** — and that layer's quantum-proof verifier is real and live on mainnet in pq402 today.
@@ -171,4 +171,7 @@ x402-bazaar answers both: a facilitator anyone self-hosts under Apache-2.0, and 
 
 ## License
 
-Apache-2.0. Every dependency is Apache-2.0 or MIT — no AGPL or copyleft anywhere in the path.
+Apache-2.0. No AGPL or strong copyleft in the dependency path. First-party code is
+Apache-2.0; dependencies are Apache-2.0/MIT, with one weak-copyleft native library
+(`@img/sharp-libvips`, LGPL-3.0, pulled in dynamically via `@huggingface/transformers`)
+that does not affect redistribution or self-hosting of this code.
