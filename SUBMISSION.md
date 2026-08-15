@@ -46,17 +46,16 @@ committed-deliverable networks — testnet and mainnet — are both live today.
 
 ## Why us / relevant experience
 
-A continuous line of shipped work in agentic payments + Soroban security on Stellar, all
-public:
-- **pq402** (github.com/Galmanus/pq402) — x402 on Stellar shipped before this RFP existed:
-  seller SDKs (JS zero-dep + Python stdlib-only), an agent CLI, a Soroban spending-policy
-  contract, and a post-quantum anonymous agent credential (Circle-STARK verified on
-  Soroban).
-- **stellar-agent-pay** (github.com/Galmanus/stellar-agent-pay) — the buyer side of the
-  x402 loop (search → pay → unlock) as a CLI agent.
-- **sorohunter** (github.com/Galmanus/sorohunter) — adversarial Soroban tooling for
+A continuous line of shipped work in agentic payments + Soroban security on Stellar:
+- **stellar-agent-pay** (github.com/Galmanus/stellar-agent-pay, public) — the buyer side of
+  the x402 loop (search → pay → unlock) as a CLI agent.
+- **sorohunter** (github.com/Galmanus/sorohunter, public) — adversarial Soroban tooling for
   missing-auth analysis with shipped findings; the same discipline produced this project's
   own threat model (docs/THREAT_MODEL.md, 10 findings).
+- **pq402** — x402 on Stellar shipped before this RFP existed (seller SDKs, agent CLI, a
+  Soroban spending-policy contract, and a post-quantum anonymous agent credential whose
+  Circle-STARK verifier is live on Stellar mainnet — verifiable on-chain). Kept in a
+  private repository as protected IP; access on request. x402-bazaar stands alone without it.
 - Non-custodial USDC on Stellar **mainnet** in production (the payer account for this
   submission's mainnet settlement is a live mainnet account already moving USDC).
 
@@ -106,9 +105,21 @@ and the whole thing is built on upstream packages the ecosystem maintains collec
 Diagrams (Mermaid) + plain-English stack: **docs/DIAGRAMS.md**. Threat model:
 **docs/THREAT_MODEL.md**. Conformance evidence: **docs/CONFORMANCE.md**.
 
-## Milestones & budget (three tranches, $150K, final = mainnet launch)
+## Milestones & budget (SCF v7 — four tranches, $120K total)
 
-**Tranche 1 — Facilitator, conformance-hardened, public testnet — $40K.**
+Disbursement follows SCF v7 (10 / 20 / 30 / 40%). The largest engineering allocation is
+the Bazaar discovery layer + `upto` (Tranche 2), per the RFP's ranking of the Bazaar as
+the highest-value deliverable. Total is set under the $150K ceiling and mapped to
+solo-builder hours rather than maximizing the cap; the base is already built and live,
+which de-risks the remaining work.
+
+**Tranche 0 — 10% at award ($12K).** Baseline already live and verifiable: facilitator on
+testnet + mainnet, six on-chain USDC settlements (one on pubnet), the Bazaar catalog +
+search, the `upto` Soroban contract, and the eval harness. First funded action interacts
+directly with Soroban/Stellar (per SCF guidance): stand up the public always-on free
+testnet facilitator endpoint.
+
+**Tranche 1 — 20% ($24K) — Facilitator, conformance-hardened.**
 Public always-on free testnet facilitator; multi-signer + fee-bump config; structured
 machine-readable error codes (non-null reason on every rejection); the official x402 repo
 e2e suite passing on testnet + diff-test vs the public x402.org facilitator, published;
@@ -116,25 +127,26 @@ configurable caller auth / rate limiting / metering with a documented business m
 self-facilitation packaging; conformance report v1. Acceptance: a third party points
 unmodified @x402 middleware at our URL and settles.
 
-**Tranche 2 — Bazaar + `upto` scheme (the novel work) — $70K.**
-Bazaar: discovery spec tracked as it evolves; hybrid ranking shipped as default with the
-eval set expanded to ≥100 services / ≥100 queries and published nDCG/hit@1; catalog-
+**Tranche 2 — 30% ($36K) — Bazaar + `upto` scheme (the novel work, the RFP's highest-value item).**
+Bazaar: discovery spec tracked as it evolves; hybrid ranking shipped as the default with
+the eval set expanded to ≥100 services / ≥100 queries and published nDCG/hit@1; catalog-
 integrity hardening (rate limits, poisoning battery, Sybil-resistant credential-holder
 provenance); MCP discovery server hardened; ≥2 external e2e integrations cataloged.
 `upto`: `scheme_upto_stellar.md` contributed upstream via the Foundation's new-scheme
-workflow (spec PR → reference implementation), contract-backed, composed with smart-
-account spending policies; seller + buyer/agent SDK helpers; role-based dev guide
-(seller / buyer-agent / operator) contributed to Stellar Developer Docs; conformance
-report v2 (exact + upto).
+workflow (spec PR → reference implementation), contract-backed with authenticated capture
+amount, composed with smart-account spending policies; seller + buyer/agent SDK helpers;
+role-based dev guide (seller / buyer-agent / operator) contributed to Stellar Developer
+Docs; conformance report v2 (exact + upto).
 
-**Tranche 3 — Mainnet launch, security review, production — $40K.**
+**Tranche 3 — 40% ($48K) — Mainnet launch, security review, UX readiness (v7 final).**
 Third-party security review via SDF's Audit Bank (off-chain service + auth-entry
-validation + discovery trust boundary + the upto contract) with resolved findings before
+validation + discovery trust boundary + the `upto` contract) with resolved findings before
 the production mainnet tag; hardened pubnet deployment with the configurable, removable
 fee model; official e2e suite passing on pubnet; conformance report v3 with mainnet
 hashes per network per scheme; operational runbook, monitoring/alerting, 99%+ uptime
-target with a degraded-mode story; a maintenance commitment for post-grant conformance
-upkeep. De-risked: a real mainnet settlement is already live.
+target with a degraded-mode story; demonstrated UX readiness (onboarding + tested
+interfaces, required for the v7 final tranche); a 12-month maintenance commitment for
+post-grant conformance upkeep. De-risked: a real mainnet settlement is already live.
 
 ## Maintenance (post-grant)
 
@@ -146,8 +158,10 @@ patches) plus handoff docs after it, coordinated through the x402 TSC.
 
 ## Open source & decentralization
 
-Apache-2.0 (OSI-approved permissive); every dependency Apache-2.0 or MIT; no AGPL or
-strong copyleft anywhere (the OZ Relayer x402 plugin is explicitly not used). Self-hostable
+Apache-2.0 (OSI-approved permissive). No AGPL or strong copyleft in the dependency path
+(the OZ Relayer x402 plugin is explicitly not used); dependencies are Apache-2.0/MIT, with
+one weak-copyleft native library (`@img/sharp-libvips`, LGPL-3.0, dynamically linked via
+`@huggingface/transformers`) that does not affect redistribution or self-hosting. Self-hostable
 by design: a self-hoster runs the facilitator with one env var and can change or remove
 the mainnet fee. The catalog is off-chain by default; no single hosted operator is
 required for the ecosystem to use x402 discovery on Stellar.

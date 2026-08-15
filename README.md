@@ -14,7 +14,6 @@
 ![x402-bazaar explainer](assets/x402-bazaar-v4.gif)
 
 [![MAINNET](https://img.shields.io/badge/settled-live%20on%20stellar%3Apubnet-brightgreen)](docs/CONFORMANCE.md)
-[![post-quantum](https://img.shields.io/badge/agent%20identity-post--quantum%20%2B%20anonymous-a371f7)](#-post-quantum-anonymous-agent-identity)
 [![search](https://img.shields.io/badge/search-nDCG%4010%200.833-1f6feb)](#search-quality-measured-not-asserted)
 [![built on](https://img.shields.io/badge/%40x402%2Fstellar-not%20reimplemented-8A2BE2)](#how-it-works)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](#license)
@@ -31,7 +30,7 @@ The Stellar x402 stack can settle payments but has **no way to discover them**. 
 | | |
 |---|---|
 | ⛓️ **Live on mainnet** | A real USDC payment settled on `stellar:pubnet` — tx [`07ecff0b…`](https://stellar.expert/explorer/public/tx/07ecff0b17403d4500e230f7f3d23cea347a495f1d3e0a193bb0cc2b0e275dbb), fees sponsored, non-custodial. Both networks the RFP calls committed deliverables are live. |
-| 🛡️ **Post-quantum, anonymous** | The only x402 facilitator with a **quantum-proof anonymous agent credential** — pay without revealing which agent you are. [Details ↓](#-post-quantum-anonymous-agent-identity) |
+| 🛡️ **Optional PQ credential** | An optional post-quantum, anonymous agent-credential extension (verifier live on mainnet, source kept as private IP) — pay without revealing which agent you are. Not required to run the facilitator or Bazaar. [Details ↓](#-optional-extension-post-quantum-anonymous-agent-identity) |
 | 🔎 **Search that works** | Natural-language ranking measured at **nDCG@10 0.833** on a committed eval set, not asserted. [Numbers ↓](#search-quality-measured-not-asserted) |
 
 ## Try it yourself
@@ -63,9 +62,11 @@ The demo is seeded with the actual services our conformance runs settled on-chai
 
 ---
 
-## 🛡️ Post-quantum anonymous agent identity
+## 🛡️ Optional extension: post-quantum anonymous agent identity
 
-**This is the part no other x402 facilitator has, on any chain.** An agent proves it belongs to an allowed set and pays — **without revealing which agent it is** — and the catalog counts **distinct credential holders**, not addresses, so provenance resists Sybil inflation where every other Bazaar's does not.
+*Optional — the facilitator and Bazaar above are the RFP deliverables and stand alone. This is a differentiating extension whose verifier is live on mainnet; its source is kept as private IP (access on request).*
+
+An agent proves it belongs to an allowed set and pays — **without revealing which agent it is** — and the catalog counts **distinct credential holders**, not addresses, so provenance resists Sybil inflation where every other Bazaar's does not.
 
 The credential is a **hash-based Circle-STARK**: no elliptic curves, no pairings, no trusted setup — **nothing Shor's algorithm can break**. Every other privacy/identity proof on Stellar today is BN254, which a quantum computer forges; this one it cannot.
 
