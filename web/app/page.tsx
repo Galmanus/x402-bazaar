@@ -454,7 +454,7 @@ export default function Home() {
           </div>
           <h1>
             <span className="ln">
-              <span>The marketplace</span>
+              <span>The Bazaar</span>
             </span>
             <span className="ln">
               <span>

@@ -34,7 +34,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "x402-bazaar — the marketplace layer for the agent economy on Stellar",
+  title: "x402-bazaar — the discovery layer for the agent economy on Stellar",
   description:
     "A self-hostable x402 facilitator for Stellar with a native Bazaar discovery layer. Live on testnet and mainnet. Post-quantum, anonymous agent identity.",
 };

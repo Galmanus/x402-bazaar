@@ -9,7 +9,7 @@
                             ▸ x402 · stellar
 ```
 
-**The marketplace layer for the agent economy on Stellar.** Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.
+**The discovery layer for the agent economy on Stellar.** Agents find a service, pay in USDC, and the catalog writes itself — one settled payment at a time.
 
 ![x402-bazaar explainer](assets/x402-bazaar-v4.gif)
 
